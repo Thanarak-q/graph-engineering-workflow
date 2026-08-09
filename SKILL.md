@@ -2,6 +2,7 @@
 name: graph-engineering-workflow
 description: "Build and verify agent graphs for coding work."
 version: 0.1.0
+license: MIT
 ---
 
 # Graph Engineering Workflow

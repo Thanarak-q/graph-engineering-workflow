@@ -1,52 +1,82 @@
 # Graph Engineering Workflow
 
-A portable skill for Hermes, Codex, and Claude Code that turns coding work into a **graph of verified loops**.
+A portable Agent Skill for turning coding work into a **dynamic graph of verified loops**.
 
-It finds work that is genuinely independent, removes fake dependencies, runs only the workers that are justified, verifies evidence in a fresh context, and sends failures back to the worker that owns the problem.
+The skill finds work that is genuinely independent, removes fake dependencies, verifies worker output against real evidence, and routes failures back only to the owner of the affected artifact. It supports Hermes Agent, Codex, and Claude Code.
 
 ## Install
 
-Clone this repository:
+### Install for all three agents
+
+The recommended installer is the open [`skills`](https://github.com/vercel-labs/skills) CLI:
 
 ```bash
-git clone https://github.com/<OWNER>/<REPOSITORY>.git
-cd <REPOSITORY>
+npx --yes skills add Thanarak-q/graph-engineering-workflow \
+  --global \
+  --yes \
+  --agent codex claude-code hermes-agent
 ```
 
-Replace `<OWNER>` and `<REPOSITORY>` with the real GitHub path.
+This command installs `graph-engineering-workflow` for Codex, Claude Code, and Hermes Agent. Start a new agent session after installation.
 
-### Hermes
+To inspect the package without installing it:
 
 ```bash
-mkdir -p "${HERMES_HOME:-$HOME/.hermes}/skills/autonomous-ai-agents/graph-engineering-workflow"
-cp SKILL.md "${HERMES_HOME:-$HOME/.hermes}/skills/autonomous-ai-agents/graph-engineering-workflow/SKILL.md"
+npx --yes skills add Thanarak-q/graph-engineering-workflow --list
 ```
 
-### Codex
+### Install for one agent
+
+Replace the agent name with `codex`, `claude-code`, or `hermes-agent`:
 
 ```bash
-mkdir -p "$HOME/.codex/skills/graph-engineering-workflow"
-cp SKILL.md "$HOME/.codex/skills/graph-engineering-workflow/SKILL.md"
+npx --yes skills add Thanarak-q/graph-engineering-workflow \
+  --global \
+  --yes \
+  --agent codex
 ```
 
-### Claude Code
+### Update or remove
 
 ```bash
+npx --yes skills update graph-engineering-workflow --global --yes
+npx --yes skills remove graph-engineering-workflow --global --yes
+```
+
+### Manual install (macOS/Linux)
+
+```bash
+git clone https://github.com/Thanarak-q/graph-engineering-workflow.git
+cd graph-engineering-workflow
+```
+
+Copy `SKILL.md` to the agent you use:
+
+```bash
+# Codex / universal Agent Skills location
+mkdir -p "$HOME/.agents/skills/graph-engineering-workflow"
+cp SKILL.md "$HOME/.agents/skills/graph-engineering-workflow/SKILL.md"
+
+# Claude Code
 mkdir -p "$HOME/.claude/skills/graph-engineering-workflow"
 cp SKILL.md "$HOME/.claude/skills/graph-engineering-workflow/SKILL.md"
-```
 
-Start a new agent session after installation.
+# Hermes Agent
+mkdir -p "${HERMES_HOME:-$HOME/.hermes}/skills/graph-engineering-workflow"
+cp SKILL.md "${HERMES_HOME:-$HOME/.hermes}/skills/graph-engineering-workflow/SKILL.md"
+```
 
 ## What it does
 
 Use this skill for feature work, migrations, repository audits, security reviews, or research when the task contains independent work.
 
-It does **not** create a large agent swarm by default. A small task with real sequential dependencies stays a single-agent loop.
+It does not create a large agent swarm by default. A small task with real sequential dependencies stays a single-agent loop.
 
-The core test is simple:
+The Graph Architect applies one test to every proposed edge:
 
-> What exact result must cross this edge? If the next job does not need it, remove the edge and run the jobs independently.
+> What exact result crosses this edge, and does the downstream job need it?
+
+If the answer is not concrete, the edge is removed.
 
 ## Example
 
@@ -54,11 +84,11 @@ A user asks:
 
 > Implement email/password login across the API and web UI.
 
-The agent begins with a read-only **Codebase Investigator** to map the project rules, affected areas, tests, ownership boundaries, and unknowns. The Graph Architect then decides whether any external API, dependency, or security-policy research is actually needed.
+The agent first clarifies missing requirements, then runs a read-only Codebase Investigator to map project rules, affected files, tests, interfaces, and ownership boundaries.
 
-After verified external research is merged, backend, frontend, and test work can run separately only if their ownership boundaries do not overlap.
+The Graph Architect decides whether external research is necessary. If the repository already answers the question, research is skipped. If backend, frontend, and test work have separate ownership boundaries, they can run independently. Otherwise, the work stays in one implementation loop.
 
-After integration, the graph selects the relevant audits. If a privacy audit finds a sensitive value in a log, the repair route goes to the logging owner, then reruns that privacy check and the affected regression tests. It does not restart unrelated workers.
+After integration, the graph selects audits that match the change. If a privacy audit finds a sensitive value in a log, the Repair Router sends the finding only to the owner of that logging code, then reruns the affected privacy and regression checks.
 
 ## The graph
 
@@ -68,76 +98,88 @@ flowchart TD
     C --> CI[Codebase Investigator, read-only]
     CI --> G[Graph Architect and fake-edge test]
 
-    G --> R1[External API research if needed]
-    G --> R2[Dependency research if needed]
-    G --> R3[Security or policy research if needed]
+    G -->|external evidence needed| R1[API or documentation research]
+    G -->|external evidence needed| R2[Dependency research]
+    G -->|external evidence needed| R3[Security or policy research]
 
     R1 --> V1[Fresh verifier]
     R2 --> V2[Fresh verifier]
     R3 --> V3[Fresh verifier]
 
-    V1 --> RM[Research merge owner]
-    V2 --> RM
-    V3 --> RM
+    V1 --> K[Verified context]
+    V2 --> K
+    V3 --> K
+    G -->|repository evidence is enough| K
 
-    RM --> I1[Backend implementation if independent]
-    RM --> I2[Frontend implementation if independent]
-    RM --> I3[Test implementation if independent]
+    K --> D{Independent implementation units?}
+    D -->|yes| I1[Implementation worker A]
+    D -->|yes| I2[Implementation worker B]
+    D -->|yes| I3[Implementation worker C]
+    D -->|no| S[Single implementation loop]
 
     I1 --> T1[Local anchor]
     I2 --> T2[Local anchor]
     I3 --> T3[Local anchor]
+    S --> TS[Local anchor]
 
     T1 --> M[Isolated merge and integration]
     T2 --> M
     T3 --> M
+    TS --> M
 
-    M --> A1[Security audit if relevant]
-    M --> A2[Privacy audit if relevant]
-    M --> A3[Functional or regression test]
-    M --> A4[Input or edge-case test if relevant]
+    M -->|audit justified| A1[Security audit]
+    M -->|audit justified| A2[Privacy audit]
+    M -->|audit justified| A3[Functional or regression test]
+    M -->|audit justified| A4[Input or edge-case test]
+    M -->|no additional audit justified| F[Final verification]
 
     A1 --> AM[Audit merge]
     A2 --> AM
     A3 --> AM
     A4 --> AM
 
-    AM -->|failure| RR[Repair router]
-    RR --> I1
-    RR --> I2
-    RR --> I3
+    AM -->|failure| RR[Repair Router]
+    RR --> O[Affected owner only]
+    O --> RT[Repair and rerun affected anchors]
+    RT --> M
 
-    AM -->|pass| F[Final verification]
+    AM -->|pass| F
     F --> H[Report and human gate]
 ```
 
-This is a template, not a fixed pipeline. The Graph Architect removes research, workers, audits, and edges that the task does not need.
+This is a capability map, not a fixed pipeline. The graph removes research, implementation workers, audits, and edges that the task does not justify.
 
 ## How it works
 
 1. **Clarify** only what the request leaves unclear.
-2. **Investigate the codebase read-only** before graph design. Map rules, affected files, tests, interfaces, ownership boundaries, and unresolved questions.
+2. **Investigate read-only** before changing a repository.
 3. **Build the graph** from real dependencies and explicit artifact ownership.
-4. **Add external research only when needed**, then fan it out only when the unanswered questions are independent.
-5. **Verify** research and worker claims with source evidence, tests, builds, scanners, or other real anchors.
-6. **Merge** with one owner. Concurrent writers use separate worktrees, branches, containers, or another isolation boundary.
-7. **Audit** the integrated result according to the change: security, privacy, functional behavior, input handling, regression risk, code quality, or dependencies.
-8. **Repair narrowly** by routing a finding to its responsible owner and rerunning only affected checks.
-9. **Report evidence**, not confidence. The final result lists changed files, commands actually run, audit results, remaining risks, and required human decisions.
+4. **Fan out selectively** when research, implementation, or audit work is independent.
+5. **Verify in fresh context** using source evidence, tests, builds, scanners, API behavior, or another real anchor.
+6. **Isolate concurrent writers** with worktrees, branches, containers, or equivalent boundaries.
+7. **Merge with one owner** and preserve conflicts instead of silently choosing a result.
+8. **Repair narrowly** and rerun only affected checks plus required regression checks.
+9. **Cap execution** with explicit worker, concurrency, wave, retry, time, and budget limits.
+10. **Report evidence** and stop at a human gate before irreversible actions.
 
 ## When to use it
 
 Use a graph when independent work exists, separate verification matters, or several audit dimensions can inspect the same integrated artifact.
 
-Use a single-agent loop when the task is small, one area owns the work, or every step genuinely depends on the result before it.
+Use a single-agent loop when the task is small, one area owns the work, or each step genuinely needs the previous result.
 
 ## What you get
 
 For a non-trivial task, the agent should produce:
 
-- a compact graph plan with real dependencies, worker ownership, and explicit worker/concurrency/retry/time/budget caps;
-- verified research findings and their evidence;
-- changed files and local verification results;
+- a compact graph plan with real dependencies and ownership;
+- explicit worker, concurrency, retry, time, and budget limits;
+- verified findings with evidence;
+- changed files and commands actually run;
 - selected audit results;
-- repair routes and unresolved risks;
-- an explicit human gate before commit, push, deploy, publish, deletion, payment, or an external send.
+- narrow repair routes and unresolved risks;
+- a human gate before commit, push, deploy, publish, deletion, payment, or an external send.
+
+## License
+
+MIT
