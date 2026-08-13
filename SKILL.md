@@ -1,17 +1,17 @@
 ---
 name: graph-engineering-workflow
-description: "Build and verify agent graphs for coding work."
-version: 0.1.0
-license: MIT
+description: Build and verify bounded agent graphs for coding work. Use when Codex or Claude needs to plan independent implementation, research, or audit work; coordinate isolated workers; verify results against evidence; merge changes; or route targeted repairs.
 ---
 
 # Graph Engineering Workflow
+
+## Purpose
 
 Use this skill to turn a coding request into a task graph made of bounded agent loops, independent workers, fresh verifiers, evidence anchors, and explicit merge and repair rules. It is a graph-orchestration discipline, not a fixed implementation checklist and not a reason to spawn agents for every task.
 
 The graph should make independent work wider, not make sequential work more complicated. A worker is allowed to contain its own loop: do the work, check it against a real anchor, repair it, and report an inspectable artifact.
 
-## When to Use
+## Task Routing
 
 Use when the user asks to:
 
@@ -24,7 +24,7 @@ Use when the user asks to:
 
 Do not force this graph for a small, clear, single-file task or for work whose steps have real sequential dependencies. Use one agent loop when there is no meaningful fan-out.
 
-## Core Operating Contract
+## Operating Workflow
 
 1. **Architect before fan-out.** Identify the units of work, their inputs and outputs, and the exact dependencies between them.
 2. **Delete fake edges.** An edge exists only when downstream work must read upstream output. The phrase “then” is not evidence of a dependency.
@@ -265,7 +265,7 @@ approvals:
   deploy: pending|approved|not_requested
 ```
 
-## Platform Adapters
+## Cross-Provider Use
 
 Use the host's native execution mechanism, but keep the graph contract unchanged:
 
@@ -295,7 +295,7 @@ Human gates: ...
 
 Ask for user approval when the graph has material scope, cost, security, privacy, data-loss, or multi-writer trade-offs. Do not ask for approval merely to run a read-only inspection the user already requested.
 
-## Final Report
+## Default Response Shape
 
 Report one consolidated result, not a transcript from every worker. Include:
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Graph Engineering Workflow"
+  short_description: "Plan and verify multi-agent coding work"
+  default_prompt: "Use $graph-engineering-workflow to plan and verify this coding task."

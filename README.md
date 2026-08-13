@@ -1,12 +1,14 @@
 # Graph Engineering Workflow
 
-A portable Agent Skill for turning coding work into a **dynamic graph of verified loops**.
+## Overview
 
-The skill finds work that is genuinely independent, removes fake dependencies, verifies worker output against real evidence, and routes failures back only to the owner of the affected artifact. It supports Hermes Agent, Codex, and Claude Code.
+A portable Agent Skill for Codex, Claude Code, and Hermes Agent. It turns complex coding work into bounded, evidence-backed agent graphs.
+
+The skill identifies genuinely independent work, removes fake dependencies, verifies worker output against real evidence, and routes failures only to the owner of the affected artifact.
 
 ## Install
 
-### Install for all three agents
+### Install for All Three Agents
 
 The recommended installer is the open [`skills`](https://github.com/vercel-labs/skills) CLI:
 
@@ -25,7 +27,7 @@ To inspect the package without installing it:
 npx --yes skills add Thanarak-q/graph-engineering-workflow --list
 ```
 
-### Install for one agent
+### Install for One Agent
 
 Replace the agent name with `codex`, `claude-code`, or `hermes-agent`:
 
@@ -36,14 +38,14 @@ npx --yes skills add Thanarak-q/graph-engineering-workflow \
   --agent codex
 ```
 
-### Update or remove
+### Update or Remove
 
 ```bash
 npx --yes skills update graph-engineering-workflow --global --yes
 npx --yes skills remove graph-engineering-workflow --global --yes
 ```
 
-### Manual install (macOS/Linux)
+### Manual Install (macOS/Linux)
 
 ```bash
 git clone https://github.com/Thanarak-q/graph-engineering-workflow.git
@@ -66,7 +68,7 @@ mkdir -p "${HERMES_HOME:-$HOME/.hermes}/skills/graph-engineering-workflow"
 cp SKILL.md "${HERMES_HOME:-$HOME/.hermes}/skills/graph-engineering-workflow/SKILL.md"
 ```
 
-## What it does
+## What It Does
 
 Use this skill for feature work, migrations, repository audits, security reviews, or research when the task contains independent work.
 
@@ -90,7 +92,7 @@ The Graph Architect decides whether external research is necessary. If the repos
 
 After integration, the graph selects audits that match the change. If a privacy audit finds a sensitive value in a log, the Repair Router sends the finding only to the owner of that logging code, then reruns the affected privacy and regression checks.
 
-## The graph
+## Workflow
 
 ```mermaid
 flowchart TD
@@ -149,7 +151,7 @@ flowchart TD
 
 This is a capability map, not a fixed pipeline. The graph removes research, implementation workers, audits, and edges that the task does not justify.
 
-## How it works
+## How It Works
 
 1. **Clarify** only what the request leaves unclear.
 2. **Investigate read-only** before changing a repository.
@@ -162,13 +164,13 @@ This is a capability map, not a fixed pipeline. The graph removes research, impl
 9. **Cap execution** with explicit worker, concurrency, wave, retry, time, and budget limits.
 10. **Report evidence** and stop at a human gate before irreversible actions.
 
-## When to use it
+## When to Use It
 
 Use a graph when independent work exists, separate verification matters, or several audit dimensions can inspect the same integrated artifact.
 
 Use a single-agent loop when the task is small, one area owns the work, or each step genuinely needs the previous result.
 
-## What you get
+## What You Get
 
 For a non-trivial task, the agent should produce:
 
