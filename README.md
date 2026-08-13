@@ -6,6 +6,26 @@ A portable Agent Skill for Codex, Claude Code, and Hermes Agent. It turns comple
 
 The skill identifies genuinely independent work, removes fake dependencies, verifies worker output against real evidence, and routes failures only to the owner of the affected artifact.
 
+## Optional Companion Skills
+
+Graph Engineering Workflow works on its own. Installing relevant companion skills makes its node routing more effective, but none of them are required and the graph never installs or waits for them during a task.
+
+Install the engineering companion set from [mattpocock/skills](https://github.com/mattpocock/skills):
+
+```bash
+npx skills@latest add mattpocock/skills
+```
+
+Choose these skills in the installer: `to-spec`, `domain-modeling`, `codebase-design`, `research`, `implement`, `tdd`, `code-review`, `diagnosing-bugs`, `resolving-merge-conflicts`, `handoff`, `prototype`, and `improve-codebase-architecture`. Choose `grill-me` or `grill-with-docs` for explicit user-led discovery; their reusable `grilling` primitive is useful for decisions with material trade-offs.
+
+For security, privacy, and dependency audit nodes, install the optional [devsecops](https://github.com/Thanarak-q/devsecops) companion skill:
+
+```bash
+npx --yes skills add Thanarak-q/devsecops --global --yes --agent codex
+```
+
+Use the appropriate agent name, or add additional supported agents, for your environment.
+
 ## Install
 
 ### Install for All Three Agents
@@ -86,7 +106,7 @@ A user asks:
 
 > Implement email/password login across the API and web UI.
 
-The agent first clarifies missing requirements, then runs a read-only Codebase Investigator to map project rules, affected files, tests, interfaces, and ownership boundaries.
+The agent first performs short, read-only Skill Discovery, then clarifies missing requirements and runs a read-only Codebase Investigator to map project rules, affected files, tests, interfaces, and ownership boundaries.
 
 The Graph Architect decides whether external research is necessary. If the repository already answers the question, research is skipped. If backend, frontend, and test work have separate ownership boundaries, they can run independently. Otherwise, the work stays in one implementation loop.
 
@@ -96,7 +116,8 @@ After integration, the graph selects audits that match the change. If a privacy 
 
 ```mermaid
 flowchart TD
-    U[User request] --> C[Clarify missing requirements]
+    U[User request] --> SD[Skill Discovery, read-only]
+    SD --> C[Clarify missing requirements]
     C --> CI[Codebase Investigator, read-only]
     CI --> G[Graph Architect and fake-edge test]
 
@@ -153,16 +174,17 @@ This is a capability map, not a fixed pipeline. The graph removes research, impl
 
 ## How It Works
 
-1. **Clarify** only what the request leaves unclear.
-2. **Investigate read-only** before changing a repository.
-3. **Build the graph** from real dependencies and explicit artifact ownership.
-4. **Fan out selectively** when research, implementation, or audit work is independent.
-5. **Verify in fresh context** using source evidence, tests, builds, scanners, API behavior, or another real anchor.
-6. **Isolate concurrent writers** with worktrees, branches, containers, or equivalent boundaries.
-7. **Merge with one owner** and preserve conflicts instead of silently choosing a result.
-8. **Repair narrowly** and rerun only affected checks plus required regression checks.
-9. **Cap execution** with explicit worker, concurrency, wave, retry, time, and budget limits.
-10. **Report evidence** and stop at a human gate before irreversible actions.
+1. **Discover skills read-only** and select only the skills that materially help each node.
+2. **Clarify** only what the request leaves unclear.
+3. **Investigate read-only** before changing a repository.
+4. **Build the graph** from real dependencies and explicit artifact ownership.
+5. **Fan out selectively** when research, implementation, or audit work is independent.
+6. **Verify in fresh context** using source evidence, tests, builds, scanners, API behavior, or another real anchor.
+7. **Isolate concurrent writers** with worktrees, branches, containers, or equivalent boundaries.
+8. **Merge with one owner** and preserve conflicts instead of silently choosing a result.
+9. **Repair narrowly** and rerun only affected checks plus required regression checks.
+10. **Cap execution** with explicit worker, concurrency, wave, retry, time, and budget limits.
+11. **Report evidence** including skills used and material skills skipped, then stop at a human gate before irreversible actions.
 
 ## When to Use It
 
@@ -175,6 +197,7 @@ Use a single-agent loop when the task is small, one area owns the work, or each 
 For a non-trivial task, the agent should produce:
 
 - a compact graph plan with real dependencies and ownership;
+- a skill plan showing selected skills by node and material skills skipped;
 - explicit worker, concurrency, retry, time, and budget limits;
 - verified findings with evidence;
 - changed files and commands actually run;

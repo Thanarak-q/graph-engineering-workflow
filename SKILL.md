@@ -54,6 +54,21 @@ On Hermes, use the native `clarify` tool when available. On Codex or Claude Code
 
 After clarification, state the confirmed objective, scope, acceptance criteria, constraints, and unresolved questions. If the request is clear and low-risk, a concise confirmation is enough. For a multi-writer, sensitive, or high-impact graph, show the graph plan and wait for approval before implementation.
 
+## Skill Discovery and Routing
+
+Run a short, read-only **Skill Discovery** for every request before selecting the graph. Inspect the skills available in the current environment and match them to the request, the repository context, and candidate nodes. For a small task, keep this to a quick inventory and only record a selected skill when one materially helps.
+
+Use two layers of routing:
+
+1. **Known routing map:** Match a node to a known companion skill when one is available: `grilling` for a user-requested or high-trade-off decision; `to-spec` or `domain-modeling` for requirements and domain design; `codebase-design` for codebase investigation and architecture; `research` for external research; `implement` or `tdd` for implementation and verification; `code-review` for code-quality audit; `devsecops` for security, privacy, or dependency audit; `diagnosing-bugs` for repair; `resolving-merge-conflicts` for merge; `handoff` for a final transfer; and `prototype` or `improve-codebase-architecture` when their specific purpose applies.
+2. **Description-based routing:** Also consider any available skill whose description is more specific to the language, framework, artifact, domain, tool, or risk than the known map.
+
+Graph Engineering Workflow controls topology, ownership, isolation, limits, merge, repair, and reporting. A selected skill controls its domain workflow only; it must not expand the graph, override limits, or bypass human gates.
+
+Choose skills for their expected value, not because they match a keyword. Multiple skills may be selected when their responsibilities do not overlap. When they overlap, select the more specific or safer skill and record why the other was skipped. Pass a worker only the skills selected for that node, with its task boundary and reason for selection.
+
+If a selected skill is unavailable at execution time or conflicts with the task constraints, continue with the base workflow and record it as skipped. Do not install, request installation of, or block on an optional companion skill during a graph run. The README may recommend companion skills for future installation.
+
 ## Graph Construction
 
 ### 1. Codebase Investigator (read-only)
@@ -116,6 +131,7 @@ A single loop is valid. A graph is justified by real width, independent verifica
 
 ```text
 User request
+  -> Skill Discovery (read-only)
   -> clarify if needed
   -> Codebase Investigator (read-only, for repository work)
   -> graph architect + fake-edge test
@@ -235,7 +251,14 @@ workers:
     output: ""
     owner: ""
     isolation: ""
+    selected_skills: []
     status: pending|running|passed|failed
+
+skills:
+  - name: ""
+    node: ""
+    status: selected|skipped
+    reason: ""
 
 artifacts:
   - path_or_id: ""
@@ -282,6 +305,7 @@ Before executing a non-trivial graph, show a compact plan:
 ```text
 GRAPH PLAN
 Objective: ...
+Skill plan: selected skills by node and material skills skipped with reasons
 Independent units: ...
 Real dependencies: ...
 Parallel groups: ...
@@ -300,6 +324,7 @@ Ask for user approval when the graph has material scope, cost, security, privacy
 Report one consolidated result, not a transcript from every worker. Include:
 
 - graph shape actually used;
+- skills used by node and material skills skipped with reasons;
 - workers completed and artifacts they produced;
 - files or paths changed;
 - anchors actually run and their real results;
