@@ -2,115 +2,14 @@
 
 ## Overview
 
-A portable Agent Skill for Codex, Claude Code, and Hermes Agent. It turns complex coding work into bounded, evidence-backed agent graphs.
+A portable Agent Skill for Codex, Claude Code, Hermes Agent, and other agent platforms. It transforms complex software engineering tasks into bounded, evidence-backed agent graphs.
 
-The skill identifies genuinely independent work, removes fake dependencies, verifies worker output against real evidence, and routes failures only to the owner of the affected artifact.
+The skill identifies independent units of work, removes fake dependencies, verifies worker output against concrete evidence, and routes failures directly to the owner of the affected code.
 
-## Optional Companion Skills
+## When to Use It
 
-Graph Engineering Workflow works on its own. Installing relevant companion skills makes its node routing more effective, but none of them are required and the graph never installs or waits for them during a task.
-
-Install the engineering companion set from [mattpocock/skills](https://github.com/mattpocock/skills):
-
-```bash
-npx skills@latest add mattpocock/skills
-```
-
-Choose these skills in the installer: `to-spec`, `domain-modeling`, `codebase-design`, `research`, `implement`, `tdd`, `code-review`, `diagnosing-bugs`, `resolving-merge-conflicts`, `handoff`, `prototype`, and `improve-codebase-architecture`. Choose `grill-me` or `grill-with-docs` for explicit user-led discovery; their reusable `grilling` primitive is useful for decisions with material trade-offs.
-
-For security, privacy, and dependency audit nodes, install the optional [devsecops](https://github.com/Thanarak-q/devsecops) companion skill:
-
-```bash
-npx --yes skills add Thanarak-q/devsecops --global --yes --agent codex
-```
-
-Use the appropriate agent name, or add additional supported agents, for your environment.
-
-## Install
-
-### Install for All Three Agents
-
-The recommended installer is the open [`skills`](https://github.com/vercel-labs/skills) CLI:
-
-```bash
-npx --yes skills add Thanarak-q/graph-engineering-workflow \
-  --global \
-  --yes \
-  --agent codex claude-code hermes-agent
-```
-
-This command installs `graph-engineering-workflow` for Codex, Claude Code, and Hermes Agent. Start a new agent session after installation.
-
-To inspect the package without installing it:
-
-```bash
-npx --yes skills add Thanarak-q/graph-engineering-workflow --list
-```
-
-### Install for One Agent
-
-Replace the agent name with `codex`, `claude-code`, or `hermes-agent`:
-
-```bash
-npx --yes skills add Thanarak-q/graph-engineering-workflow \
-  --global \
-  --yes \
-  --agent codex
-```
-
-### Update or Remove
-
-```bash
-npx --yes skills update graph-engineering-workflow --global --yes
-npx --yes skills remove graph-engineering-workflow --global --yes
-```
-
-### Manual Install (macOS/Linux)
-
-```bash
-git clone https://github.com/Thanarak-q/graph-engineering-workflow.git
-cd graph-engineering-workflow
-```
-
-Copy `SKILL.md` to the agent you use:
-
-```bash
-# Codex / universal Agent Skills location
-mkdir -p "$HOME/.agents/skills/graph-engineering-workflow"
-cp SKILL.md "$HOME/.agents/skills/graph-engineering-workflow/SKILL.md"
-
-# Claude Code
-mkdir -p "$HOME/.claude/skills/graph-engineering-workflow"
-cp SKILL.md "$HOME/.claude/skills/graph-engineering-workflow/SKILL.md"
-
-# Hermes Agent
-mkdir -p "${HERMES_HOME:-$HOME/.hermes}/skills/graph-engineering-workflow"
-cp SKILL.md "${HERMES_HOME:-$HOME/.hermes}/skills/graph-engineering-workflow/SKILL.md"
-```
-
-## What It Does
-
-Use this skill for feature work, migrations, repository audits, security reviews, or research when the task contains independent work.
-
-It does not create a large agent swarm by default. A small task with real sequential dependencies stays a single-agent loop.
-
-The Graph Architect applies one test to every proposed edge:
-
-> What exact result crosses this edge, and does the downstream job need it?
-
-If the answer is not concrete, the edge is removed.
-
-## Example
-
-A user asks:
-
-> Implement email/password login across the API and web UI.
-
-The agent first performs short, read-only Skill Discovery, then clarifies missing requirements and runs a read-only Codebase Investigator to map project rules, affected files, tests, interfaces, and ownership boundaries.
-
-The Graph Architect decides whether external research is necessary. If the repository already answers the question, research is skipped. If backend, frontend, and test work have separate ownership boundaries, they can run independently. Otherwise, the work stays in one implementation loop.
-
-After integration, the graph selects audits that match the change. If a privacy audit finds a sensitive value in a log, the Repair Router sends the finding only to the owner of that logging code, then reruns the affected privacy and regression checks.
+- **Use an agent graph when:** Work units are independent (e.g. backend vs. frontend, multi-file migrations, parallel research), independent verification is critical, or multiple audits (security, privacy, performance) inspect the same integrated build.
+- **Use a single-agent loop when:** The task is small, sequential dependencies are strictly required, or a single component owns the entire change.
 
 ## Workflow
 
@@ -170,41 +69,121 @@ flowchart TD
     F --> H[Report and human gate]
 ```
 
-This is a capability map, not a fixed pipeline. The graph removes research, implementation workers, audits, and edges that the task does not justify.
+> **Note:** This is a capability map, not a rigid sequence. The graph prunes research, implementation branches, audits, and edges that the specific task does not justify.
 
 ## How It Works
 
-1. **Discover skills read-only** and select only the skills that materially help each node.
-2. **Clarify** only what the request leaves unclear.
-3. **Investigate read-only** before changing a repository.
-4. **Build the graph** from real dependencies and explicit artifact ownership.
-5. **Fan out selectively** when research, implementation, or audit work is independent.
-6. **Verify in fresh context** using source evidence, tests, builds, scanners, API behavior, or another real anchor.
-7. **Isolate concurrent writers** with worktrees, branches, containers, or equivalent boundaries.
-8. **Merge with one owner** and preserve conflicts instead of silently choosing a result.
-9. **Repair narrowly** and rerun only affected checks plus required regression checks.
-10. **Cap execution** with explicit worker, concurrency, wave, retry, time, and budget limits.
-11. **Report evidence** including skills used and material skills skipped, then stop at a human gate before irreversible actions.
+1. **Discover skills (read-only):** Inspect available environment skills and select only those that materially benefit specific nodes.
+2. **Clarify requirements:** Ask targeted, high-value questions when requirements or constraints are ambiguous.
+3. **Investigate codebase (read-only):** Map project rules, affected files, tests, and interfaces before making changes.
+4. **Construct graph & test edges:** Apply the fake-edge test to every proposed dependency:
+   > *What exact output crosses this edge, and does the downstream job fail without it?*
+   If the dependency is not strictly necessary, the edge is removed.
+5. **Fan out selectively:** Parallelize research, implementation, or audits only when work units are truly independent.
+6. **Verify with fresh context:** Never trust worker self-reports alone. Verifiers run in isolated contexts using tests, compilers, linters, scanners, or API checks.
+7. **Isolate concurrent writers:** Use separate worktrees, branches, or containers when multiple workers modify code.
+8. **Single-owner merge:** A designated merge owner reconciles branches and documents conflict resolutions.
+9. **Narrow repair routing:** Send failed audit findings directly to the responsible component owner, rerunning only affected checks and regressions.
+10. **Cap execution:** Set explicit limits on worker count, concurrency, waves, retries, runtime, and budget.
+11. **Enforce human gates:** Require explicit human approval before irreversible actions (commit, push, deploy, publish, deletion, payments).
 
-## When to Use It
+## Example Walkthrough
 
-Use a graph when independent work exists, separate verification matters, or several audit dimensions can inspect the same integrated artifact.
+**Request:** *"Implement email/password authentication across the API and web UI."*
 
-Use a single-agent loop when the task is small, one area owns the work, or each step genuinely needs the previous result.
+1. **Discovery & Investigation:** The agent discovers available skills, clarifies requirements, and inspects existing auth routes, schemas, and tests without modifying files.
+2. **Graph Planning:** If repository documentation is sufficient, external research is skipped. Backend API endpoints and frontend login forms have distinct file boundaries, so they run in parallel worker branches.
+3. **Integration & Audit:** Once local tests pass, the merge owner integrates the branches and runs targeted security, privacy, and regression checks.
+4. **Targeted Repair:** If a privacy audit identifies sensitive token logging in an API route, the Repair Router assigns the fix only to the backend owner, then reruns the privacy and regression tests.
+5. **Human Gate:** After final verification passes, the agent reports evidence and prompts for approval before committing.
 
-## What You Get
+## Deliverables
 
-For a non-trivial task, the agent should produce:
+For non-trivial tasks, the workflow produces:
 
-- a compact graph plan with real dependencies and ownership;
-- a skill plan showing selected skills by node and material skills skipped;
-- explicit worker, concurrency, retry, time, and budget limits;
-- verified findings with evidence;
-- changed files and commands actually run;
-- selected audit results;
-- narrow repair routes and unresolved risks;
-- a human gate before commit, push, deploy, publish, deletion, payment, or an external send.
+- **Graph Plan:** Verified task units, real dependencies, and ownership boundaries.
+- **Skill Plan:** Selected skills per node and explanations for skipped skills.
+- **Execution Limits:** Explicit caps on workers, concurrency, retries, runtime, and budget.
+- **Verified Findings:** Factual claims backed by source citations, code locations, or scan output.
+- **Change Summary:** Exact files modified and test/build commands executed.
+- **Audit Reports:** Targeted results across security, privacy, performance, and regression dimensions.
+- **Repair Records:** Narrow routing history and any remaining trade-offs.
+- **Human Gate Request:** Confirmation prompt prior to commits, pushes, deployments, or destructive actions.
+
+## Installation
+
+### Using the Skills CLI
+
+The recommended installer is the [`skills`](https://github.com/vercel-labs/skills) CLI:
+
+#### Install for all supported agents
+```bash
+npx --yes skills add Thanarak-q/graph-engineering-workflow \
+  --global \
+  --yes \
+  --agent codex claude-code hermes-agent
+```
+
+#### Install for a single agent
+Replace `codex` with `claude-code` or `hermes-agent`:
+```bash
+npx --yes skills add Thanarak-q/graph-engineering-workflow \
+  --global \
+  --yes \
+  --agent codex
+```
+
+#### Inspect without installing
+```bash
+npx --yes skills add Thanarak-q/graph-engineering-workflow --list
+```
+
+#### Update or Remove
+```bash
+npx --yes skills update graph-engineering-workflow --global --yes
+npx --yes skills remove graph-engineering-workflow --global --yes
+```
+
+### Manual Installation (macOS / Linux)
+
+```bash
+git clone https://github.com/Thanarak-q/graph-engineering-workflow.git
+cd graph-engineering-workflow
+```
+
+Copy `SKILL.md` to your target agent directory:
+
+```bash
+# Codex / Universal Agent Skills
+mkdir -p "$HOME/.agents/skills/graph-engineering-workflow"
+cp SKILL.md "$HOME/.agents/skills/graph-engineering-workflow/SKILL.md"
+
+# Claude Code
+mkdir -p "$HOME/.claude/skills/graph-engineering-workflow"
+cp SKILL.md "$HOME/.claude/skills/graph-engineering-workflow/SKILL.md"
+
+# Hermes Agent
+mkdir -p "${HERMES_HOME:-$HOME/.hermes}/skills/graph-engineering-workflow"
+cp SKILL.md "${HERMES_HOME:-$HOME/.hermes}/skills/graph-engineering-workflow/SKILL.md"
+```
+
+## Optional Companion Skills
+
+Graph Engineering Workflow operates independently. Companion skills enhance routing for specific node types when installed:
+
+### Engineering Companions
+Install from [mattpocock/skills](https://github.com/mattpocock/skills):
+```bash
+npx skills@latest add mattpocock/skills
+```
+Recommended skills: `to-spec`, `domain-modeling`, `codebase-design`, `research`, `implement`, `tdd`, `code-review`, `diagnosing-bugs`, `resolving-merge-conflicts`, `handoff`, `prototype`, `improve-codebase-architecture`, and `grill-me`.
+
+### Security & Audit Companions
+For security, privacy, and dependency audit nodes, install [devsecops](https://github.com/Thanarak-q/devsecops):
+```bash
+npx --yes skills add Thanarak-q/devsecops --global --yes --agent codex
+```
 
 ## License
 
-MIT
+[MIT](LICENSE)
