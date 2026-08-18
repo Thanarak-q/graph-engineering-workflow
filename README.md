@@ -5,7 +5,7 @@
 **Turn complex coding tasks into bounded, evidence-backed agent graphs.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![Agents](https://img.shields.io/badge/Agents-Codex%20%7C%20Claude%20Code%20%7C%20Hermes-8A2BE2?style=flat-square)](SKILL.md)
+[![Agents](https://img.shields.io/badge/Agents-Antigravity%20%7C%20Codex%20%7C%20Claude%20Code%20%7C%20Hermes-8A2BE2?style=flat-square)](SKILL.md)
 [![Skill Type](https://img.shields.io/badge/Type-Portable%20Agent%20Skill-success?style=flat-square)](SKILL.md)
 [![Workflow](https://img.shields.io/badge/Orchestration-Evidence--Backed-orange?style=flat-square)](#architecture--workflow)
 
@@ -24,7 +24,7 @@
 
 ## Overview
 
-Graph Engineering Workflow is a portable Agent Skill designed for Codex, Claude Code, Hermes Agent, and modern agentic coding environments.
+Graph Engineering Workflow is a portable Agent Skill designed for Antigravity (AGY), Codex, Claude Code, Hermes Agent, and modern agentic coding environments.
 
 Rather than relying on unconstrained swarms or rigid linear checklists, this workflow:
 - **Eliminates Fake Dependencies:** Distinguishes between truly independent work and artificial sequence constraints.
@@ -113,11 +113,11 @@ flowchart TD
 Install using the open [`skills`](https://github.com/vercel-labs/skills) CLI:
 
 ```bash
-# Install for all supported agents (Codex, Claude Code, Hermes Agent)
-npx --yes skills add Thanarak-q/graph-engineering-workflow --global --yes --agent codex claude-code hermes-agent
+# Install for all supported agents (Antigravity, Codex, Claude Code, Hermes Agent)
+npx --yes skills add Thanarak-q/graph-engineering-workflow --global --yes --agent antigravity antigravity-cli codex claude-code hermes-agent
 
-# Or install for a specific agent (e.g., codex)
-npx --yes skills add Thanarak-q/graph-engineering-workflow --global --yes --agent codex
+# Or install for a specific agent (e.g. antigravity or codex)
+npx --yes skills add Thanarak-q/graph-engineering-workflow --global --yes --agent antigravity
 ```
 
 <details>
@@ -141,9 +141,13 @@ npx --yes skills remove graph-engineering-workflow --global --yes
 git clone https://github.com/Thanarak-q/graph-engineering-workflow.git
 cd graph-engineering-workflow
 
-# Codex / Universal Agent Skills
+# Antigravity / Codex / Universal Agent Skills
 mkdir -p "$HOME/.agents/skills/graph-engineering-workflow"
 cp SKILL.md "$HOME/.agents/skills/graph-engineering-workflow/SKILL.md"
+
+# Antigravity Global Config
+mkdir -p "$HOME/.gemini/config/skills/graph-engineering-workflow"
+cp SKILL.md "$HOME/.gemini/config/skills/graph-engineering-workflow/SKILL.md"
 
 # Claude Code
 mkdir -p "$HOME/.claude/skills/graph-engineering-workflow"
