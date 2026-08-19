@@ -24,21 +24,23 @@ Use when the user asks to:
 
 Do not force this graph for a small, clear, single-file task or for work whose steps have real sequential dependencies. Use one agent loop when there is no meaningful fan-out.
 
-## Operating Workflow
+## Operating Principles
 
-1. **Architect before fan-out.** Identify the units of work, their inputs and outputs, and the exact dependencies between them.
-2. **Delete fake edges.** An edge exists only when downstream work must read upstream output. The phrase “then” is not evidence of a dependency.
-3. **Fan out only independent work.** Parallelize files, modules, questions, or audit dimensions only when they can proceed without one another.
-4. **Make each worker bounded.** Give it one job, a clear input, an output schema, an allowed write boundary, an anchor, and a stop condition.
-5. **Do not trust worker self-reports.** A verifier uses a fresh context and checks source, tests, compiler output, scanner output, API behavior, or another real anchor.
-6. **Keep research claims traceable.** Every important claim has a source pointer, evidence span or code location, freshness where relevant, and confidence.
-7. **One owner merges.** Parallel workers do not jointly edit a shared artifact. A merge owner resolves conflicts and records the decision.
-8. **Isolate writers.** Use separate worktrees, branches, containers, or equivalent boundaries when more than one worker writes code.
-9. **Route repairs narrowly.** A failed audit returns the affected artifact to the responsible worker and reruns only the impacted checks plus required regression checks.
-10. **Cap the graph.** Before dispatching any non-trivial graph, set explicit limits for worker count, concurrency, waves, retries, grader rounds, time, and budget. Unset or zero-valued limits are not valid defaults. Scale only after a small pilot is inspectable.
-11. **Gate irreversible actions.** Commit, push, deploy, publish, delete, payment, and external sends require an explicit human gate unless the user has already granted a clear equivalent approval for that exact action.
-12. **Report evidence, not confidence.** Never call work complete because a worker says it is complete.
-13. **Close on a graded rubric.** Fix the acceptance criteria before the work starts, and let a fresh grader score them against evidence. The graph closes on a full score, not on the builder's judgment that it is done. In `score-only` mode the grader measures and stops; it never repairs what it is grading.
+These thirteen rules are the summary layer. Each names the section that specifies it, and that section is normative — when this list and a section appear to disagree, the section wins.
+
+1. **Architect before fan-out.** Identify the units of work, their inputs and outputs, and the exact dependencies between them. → *Graph Construction*
+2. **Delete fake edges.** An edge exists only when downstream work must read upstream output. → *Apply the fake-edge test*
+3. **Fan out only independent work.** → *Select topology*
+4. **Make each worker bounded.** One job, one input, one output schema, one write boundary, an anchor, a stop condition. → *Define work units*
+5. **Do not trust worker self-reports.** A verifier works from a fresh context and a real anchor. → *Audit Graph*
+6. **Keep research claims traceable.** → *External Research Graph*
+7. **One owner merges.** Parallel workers never jointly edit a shared artifact. → *Implementation Graph*
+8. **Isolate writers.** → *Implementation Graph*
+9. **Route repairs narrowly.** → *Repair and Conflict Routing*
+10. **Cap the graph.** Unset or zero-valued limits are not valid defaults. → *State and Artifact Contract*
+11. **Gate irreversible actions.** Commit, push, deploy, publish, delete, payment, and external sends need an explicit human gate. → *Graph Plan Output*
+12. **Report evidence, not confidence.** Never call work complete because a worker says it is complete. → *Default Response Shape*
+13. **Close on a graded rubric.** Fix the criteria before the work starts; a fresh grader scores them against evidence. → *Acceptance Rubric*, *Fresh Grader Loop*
 
 ## User Interaction
 
@@ -57,7 +59,7 @@ After clarification, state the confirmed objective, scope, acceptance criteria, 
 
 ## Skill Discovery and Routing
 
-Run a short, read-only **Skill Discovery** for every request before selecting the graph. Inspect the skills available in the current environment and match them to the request, the repository context, and candidate nodes. For a small task, keep this to a quick inventory and only record a selected skill when one materially helps.
+Run a short, read-only **Skill Discovery** before selecting the graph for any non-trivial request. Inspect the skills available in the current environment and match them to the request, the repository context, and candidate nodes. Skip it for work small enough that no companion skill would change the approach; a single-file fix does not need a routing pass.
 
 Use two layers of routing:
 
