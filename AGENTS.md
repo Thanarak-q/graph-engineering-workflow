@@ -16,8 +16,8 @@ No build system or automated test runner is configured. Before opening a change,
 
 ```bash
 git diff --check                 # Detect whitespace errors
-sed -n '1,240p' SKILL.md         # Review the normative document
-sed -n '1,240p' README.md         # Review user-facing documentation
+cat SKILL.md                     # Review the normative document
+cat README.md                    # Review user-facing documentation
 ```
 
 For installation-related changes, inspect the documented CLI commands with a dry run or the CLI’s listing mode where available; do not install globally as part of routine validation.

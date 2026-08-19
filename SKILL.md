@@ -35,9 +35,10 @@ Do not force this graph for a small, clear, single-file task or for work whose s
 7. **One owner merges.** Parallel workers do not jointly edit a shared artifact. A merge owner resolves conflicts and records the decision.
 8. **Isolate writers.** Use separate worktrees, branches, containers, or equivalent boundaries when more than one worker writes code.
 9. **Route repairs narrowly.** A failed audit returns the affected artifact to the responsible worker and reruns only the impacted checks plus required regression checks.
-10. **Cap the graph.** Before dispatching any non-trivial graph, set explicit limits for worker count, concurrency, waves, retries, time, and budget. Unset or zero-valued limits are not valid defaults. Scale only after a small pilot is inspectable.
+10. **Cap the graph.** Before dispatching any non-trivial graph, set explicit limits for worker count, concurrency, waves, retries, grader rounds, time, and budget. Unset or zero-valued limits are not valid defaults. Scale only after a small pilot is inspectable.
 11. **Gate irreversible actions.** Commit, push, deploy, publish, delete, payment, and external sends require an explicit human gate unless the user has already granted a clear equivalent approval for that exact action.
 12. **Report evidence, not confidence.** Never call work complete because a worker says it is complete.
+13. **Close on a graded rubric.** Fix the acceptance criteria before the work starts, and let a fresh grader score them against evidence. The graph closes on a full score, not on the builder's judgment that it is done. In `score-only` mode the grader measures and stops; it never repairs what it is grading.
 
 ## User Interaction
 
@@ -66,6 +67,12 @@ Use two layers of routing:
 Graph Engineering Workflow controls topology, ownership, isolation, limits, merge, repair, and reporting. A selected skill controls its domain workflow only; it must not expand the graph, override limits, or bypass human gates.
 
 Choose skills for their expected value, not because they match a keyword. Multiple skills may be selected when their responsibilities do not overlap. When they overlap, select the more specific or safer skill and record why the other was skipped. Pass a worker only the skills selected for that node, with its task boundary and reason for selection.
+
+A worker uses the skills it was handed and does not go shopping for more. Its own environment may list skills the parent did not select; that listing is not a mandate, and a worker that decides it needs another skill reports the gap in its output instead of expanding its own scope. The parent owns routing because only the parent can see the whole graph.
+
+Route the acceptance grader like any other node. It may use a read-only review or audit skill that helps it check a criterion, and it may never use a skill that writes, repairs, or otherwise changes what it is grading.
+
+Skill Discovery runs before the graph is selected, so its first pass is an inventory, not a final assignment. Bind skills to nodes once the units exist, and record any skill added later with the round or node that introduced it.
 
 If a selected skill is unavailable at execution time or conflicts with the task constraints, continue with the base workflow and record it as skipped. Do not install, request installation of, or block on an optional companion skill during a graph run. The README may recommend companion skills for future installation.
 
@@ -103,6 +110,7 @@ Every unit must declare:
 - write boundary;
 - owner;
 - verifier;
+- selected skills for this node, each with the reason it was chosen;
 - retry and stop condition.
 
 ### 3. Apply the fake-edge test
@@ -145,6 +153,7 @@ User request
   -> audit merge and conflict decision
   -> narrow repair route
   -> final verification and report
+  -> acceptance gate (fresh grader scores the rubric; failures route back)
   -> human gate before commit/push/deploy
 ```
 
@@ -181,7 +190,7 @@ Split implementation only along real ownership boundaries. Examples are backend,
 
 Each implementation worker must:
 
-1. receive a bounded task and acceptance checks;
+1. receive a bounded task, its acceptance checks, and the skills selected for its node with the reason for each;
 2. work in an isolated worktree, branch, container, or equivalent boundary when another worker writes concurrently;
 3. avoid modifying artifacts owned by another worker;
 4. run local anchors such as targeted tests, type checks, builds, or linters;
@@ -281,11 +290,25 @@ limits:
   max_retries: "<non-negative integer>"
   time_limit: "<explicit duration>"
   budget: "<explicit token or cost limit>"
+  max_grader_rounds: "<positive integer>"
 approvals:
   graph: pending|approved|not_required
   commit: pending|approved|not_requested
   push: pending|approved|not_requested
   deploy: pending|approved|not_requested
+
+acceptance:
+  mode: hybrid|score-only
+  grader: independent|self_graded
+  round: 0
+  score: "<passed>/<applicable>"
+  gate: open|closed|capped
+  criteria:
+    - id: ""
+      verdict: pass|fail|not_applicable
+      severity: blocker|major|minor|none
+      evidence: ""
+      defect: ""
 ```
 
 ## Cross-Provider Use
@@ -295,6 +318,10 @@ Use the host's native execution mechanism, but keep the graph contract unchanged
 - **Hermes:** use `delegate_task` for bounded isolated workers when appropriate; use native `clarify` for choices; keep one parent merge owner; verify returned artifacts yourself.
 - **Codex:** use native subagents or separate bounded `codex` executions when available; use isolated worktrees for concurrent writers; otherwise run the graph sequentially rather than pretending it was parallel.
 - **Claude Code:** use native subagents, teams, or isolated worktrees when available; keep verifier context separate from executor context; collect structured reports before merging.
+
+Get the acceptance grader a genuinely separate context on whatever host you are on: a fresh delegated task on Hermes, a separate subagent or `codex` execution on Codex, a subagent or worktree-scoped session on Claude Code. Hand it the rubric, the artifacts, the diff, and the recorded evidence — never the build transcript.
+
+When the host cannot give you an independent context at all, still grade the rubric, but record the result as `self_graded` and say so in the report. A self-graded score is a measurement the builder took of its own work; it never closes the acceptance gate on its own, and it needs a human decision in place of the gate.
 
 A platform limitation is not permission to claim that a worker ran, a verifier checked something, or parallelism occurred. Report what actually executed.
 
@@ -313,11 +340,104 @@ Worker ownership/isolation: ...
 Verifier and anchors: ...
 Audit nodes selected: ...
 Repair routes: ...
-Limits: explicit numeric worker/concurrency/wave/retry caps plus time and budget
+Acceptance rubric: grading mode, criteria that apply, and who grades them
+Limits: explicit numeric worker/concurrency/wave/retry/grader-round caps plus time and budget
 Human gates: ...
 ```
 
 Ask for user approval when the graph has material scope, cost, security, privacy, data-loss, or multi-writer trade-offs. Do not ask for approval merely to run a read-only inspection the user already requested.
+
+## Acceptance Rubric
+
+The graph is complete when a fresh grader scores **10/10** on the rubric below. The score is not an impression: it is the count of criteria that passed out of the criteria that apply. Each criterion is binary and must be answered with an evidence pointer — a `file:line`, a command and its output, or an artifact id. A criterion that the task does not exercise is marked `not_applicable` with a one-line reason and is excluded from the denominator, so a small graph may legitimately close at 7/7.
+
+| # | Criterion | Passes only when |
+|---|---|---|
+| C1 | Topology is real | Independent units and real edges are documented, and every removed fake edge is named. |
+| C2 | Workers are bounded | Each worker has a stated input, output, owner, write boundary, and stop condition, and was handed the skills its node was assigned in the graph plan. |
+| C3 | Writers are isolated | Every concurrent writer had a separate worktree, branch, container, or equivalent. |
+| C4 | Research is traceable | Each claim carries source, evidence span, freshness, and confidence, and passed fresh verification. |
+| C5 | Audits are anchored | Each audit used a real anchor, or is explicitly labeled an unverified review. |
+| C6 | Anchors actually ran | Tests, builds, scans, and type checks were executed, their output inspected, and the final artifact read back or run. |
+| C7 | Conflicts and repairs are routed | Every conflict and repair has an owner, a decision or unresolved marker, and the rechecks that followed. |
+| C8 | Limits held | Worker, concurrency, wave, retry, time, budget, and grader-round caps were set to explicit values and respected. |
+| C9 | Human gates held | No commit, push, deploy, publish, delete, payment, or external send happened without an explicit approval for that exact action. |
+| C10 | The report is honest | Facts, assumptions, decisions, and unresolved risks are separated, and nothing is claimed that did not run. |
+
+Criteria C1–C10 grade how the graph was run. They do not grade whether the work is correct, and a graph that follows every rule while shipping the wrong behavior can still pass all ten. So the rubric also carries one **outcome criterion per acceptance criterion** confirmed with the user, numbered from C11:
+
+- derive them from `task.acceptance_criteria`, not from what the workers happened to build;
+- each one passes only against a real anchor — a test, a run, an API call, an inspected output — never a worker's description of the behavior;
+- fix them before the first round along with C1–C10, and never add one mid-loop to justify work that was already done.
+
+A task with three acceptance criteria is graded out of thirteen. `10/10` on the process criteria alone is not a passing graph; it is a well-run graph whose outcome is still ungraded.
+
+## Grading Modes
+
+The rubric runs in one of two modes. **`hybrid` is the default**; use it unless the user names another mode.
+
+| Mode | Grader | Repair | Writes | Ends when |
+|---|---|---|---|---|
+| `hybrid` (default) | Scores the rubric and returns a defect list | Routes every failure to its owner and re-grades | Yes | Full score, or `max_grader_rounds` is reached |
+| `score-only` | Scores the rubric and returns a defect list | None | No | The user says so, or there is nothing new to grade |
+
+Enter `score-only` when the user asks for it by name, or asks to grade, score, audit, or review without changing anything. In this mode:
+
+- do not edit, repair, commit, or run anything that writes — the mode is read-only, and its value comes from being an untouched measurement;
+- report the score, every failing criterion, its severity, and its evidence, then stop and hand the decision to the user;
+- keep grading rounds cheap and repeatable so the score can be re-taken as the work moves, and state the round number and what changed since the previous score;
+- never repair a defect just because it is small. A grader that fixes what it measures is no longer an independent measurement, and its next score is worthless.
+
+`score-only` does not close the graph. A passing score from it is a measurement, not an acceptance; the work still needs a `hybrid` gate or an explicit human decision before it counts as complete.
+
+Announce the active mode in the graph plan and in the final report. If the user asks for repairs while in `score-only`, switch to `hybrid` and say that the mode changed.
+
+## Fresh Grader Loop
+
+The grader is a node in the graph, not a formality at the end.
+
+1. **Grade with a fresh context.** The grader receives the rubric, the final artifacts, the diff, and the recorded evidence — never the build conversation. A grader that watched the work is not an independent check, and reusing the builder's context is the fastest way to a fake 10/10.
+2. **Return a defect list, not a verdict.** Every `fail` carries the criterion id, the evidence that shows the failure, a severity of `blocker`, `major`, or `minor`, and the specific defect. `major` and `minor` set repair order; only the pass/fail state decides whether the gate opens.
+3. **Route failures narrowly.** Each defect goes to the responsible worker through the existing repair router, not back through the whole graph.
+4. **Re-grade the whole rubric.** The next round re-checks every criterion, not only the repaired ones, so a fix cannot silently break a criterion that already passed.
+5. **Never edit the rubric mid-loop.** The criteria are fixed before the first round. If a criterion turns out to be wrong, stop the loop, say so, and get the user's decision — do not soften the criterion to make the score rise.
+6. **Stop at the cap.** (`hybrid` only.) The loop ends at `10/10` or at `max_grader_rounds`. Hitting the cap with criteria still failing is a capped result, not a completed one; report the score, the open defects, and what remains.
+
+```text
+build -> fresh grader -> 10/10? -> yes -> human gate
+                           |
+                           no -> defect list -> narrow repair -> re-grade (round + 1)
+```
+
+A grader round returns exactly this shape:
+
+```yaml
+mode: hybrid
+round: 2
+score: "11/13"
+gate: closed
+criteria:
+  - id: C6
+    verdict: pass
+    severity: none
+    evidence: "pnpm test -- auth/: 48 passed, 0 failed"
+  - id: C4
+    verdict: not_applicable
+    severity: none
+    evidence: "no external research node ran"
+  - id: C11
+    verdict: fail
+    severity: blocker
+    evidence: "POST /login with a valid password returns 500; src/auth/session.ts:74"
+    defect: "session write happens before the transaction commits"
+  - id: C9
+    verdict: fail
+    severity: major
+    evidence: "git log shows commit 4a1c2f9 with approvals.commit still pending"
+    defect: "committed without the human gate"
+```
+
+For a small single-loop task, this collapses to one grading pass over a short rubric. Do not spawn a grader graph for work that a single fresh read can settle.
 
 ## Default Response Shape
 
@@ -329,6 +449,7 @@ Report one consolidated result, not a transcript from every worker. Include:
 - files or paths changed;
 - anchors actually run and their real results;
 - audit results by dimension;
+- the grading mode, the acceptance rubric score, the grader round it was reached in, and any criterion still failing or marked not applicable;
 - conflicts and unresolved issues;
 - retries or repair routes used;
 - work not run and why;
@@ -351,20 +472,7 @@ Never fabricate worker output, test results, scan results, URLs, commits, or suc
 - Using a role name as a security boundary.
 - Letting an optimizer change the metric, policy, or acceptance rule it is being judged against.
 - Treating a worker's self-report as proof that an artifact exists.
-
-## Verification Checklist
-
-Before declaring the graph complete, confirm:
-
-- independent units and real edges are documented;
-- fake edges were removed;
-- every worker has a bounded input, output, owner, and stop condition;
-- concurrent writers were isolated;
-- research claims have evidence and fresh verification;
-- each audit used a real anchor or is explicitly marked as an unverified review;
-- conflicts and repairs were routed and recorded;
-- actual tests/scans/builds were run and their output was inspected;
-- worker, concurrency, retry, and budget caps were respected;
-- the final artifact was read back or executed;
-- human gates were honored before irreversible actions;
-- the final report separates facts, assumptions, decisions, and unresolved risks.
+- Giving the acceptance grader the build conversation and still calling it a fresh grader.
+- Rewriting, softening, or dropping a rubric criterion during the loop instead of fixing the work.
+- Reporting a rubric score without the evidence pointer that earned each pass.
+- Declaring completion after the grader round cap when criteria are still failing.
