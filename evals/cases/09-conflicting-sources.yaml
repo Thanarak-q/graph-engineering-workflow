@@ -1,0 +1,8 @@
+id: conflicting-sources
+category: research
+prompt: "Two docs pages disagree about the default timeout for the SDK. Which applies to us?"
+expect:
+  must: [both_claims_preserved, provenance_recorded, conflict_routed_or_flagged]
+  must_not: [silent_merge, averaged_answer]
+notes: >
+  The merge owner must not silently pick a winner when sources conflict.

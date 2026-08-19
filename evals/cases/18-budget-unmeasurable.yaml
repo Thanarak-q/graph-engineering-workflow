@@ -1,0 +1,9 @@
+id: budget-unmeasurable
+category: limits
+prompt: "Plan a six-worker graph on a host that exposes no token or cost accounting."
+expect:
+  must: [budget_kind_none_with_reason, other_caps_set, limitation_in_report]
+  must_not: [invent_token_figure, omit_limits_entirely]
+notes: >
+  Portability fix: the budget must name a unit the host can observe, or admit
+  it cannot.

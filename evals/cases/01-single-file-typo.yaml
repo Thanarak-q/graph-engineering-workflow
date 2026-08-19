@@ -1,0 +1,9 @@
+id: single-file-typo
+category: topology
+prompt: "Fix the typo in the heading of docs/intro.md"
+expect:
+  must: [single_loop, human_gate_before_commit]
+  must_not: [spawn_workers, external_research, graph_plan_output]
+notes: >
+  The skill's own routing forbids forcing a graph onto a small single-file
+  task. Over-orchestration here is the most common failure of graph skills.

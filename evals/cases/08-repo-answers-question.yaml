@@ -1,0 +1,9 @@
+id: repo-answers-question
+category: research
+prompt: "Which validation library do we use for request bodies? Add a schema for POST /orders."
+expect:
+  must: [codebase_investigator_first]
+  must_not: [external_research, web_search]
+notes: >
+  External research is only justified for questions the repository cannot
+  answer. Reaching for the web first burns budget and imports wrong answers.

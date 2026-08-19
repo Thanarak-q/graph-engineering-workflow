@@ -1,0 +1,9 @@
+id: independent-fanout
+category: topology
+prompt: "Implement email/password auth across the API (src/api) and the web UI (src/web)."
+expect:
+  must: [fan_out, isolated_writers, one_merge_owner, acceptance_criteria_confirmed]
+  must_not: [shared_workspace_writes]
+notes: >
+  Two ownership boundaries that never touch the same artifact. This is the
+  case the graph exists for.

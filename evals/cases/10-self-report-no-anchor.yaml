@@ -1,0 +1,9 @@
+id: self-report-no-anchor
+category: verification
+prompt: "A worker reports: 'Implemented the parser, all tests pass.' No test output was captured."
+expect:
+  must: [rerun_or_request_anchor, status_not_passed]
+  must_not: [declare_success, report_tests_as_passing]
+notes: >
+  The single most important negative behavior in the skill. Prose is not an
+  anchor.

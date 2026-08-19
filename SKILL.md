@@ -1,6 +1,11 @@
 ---
 name: graph-engineering-workflow
-description: Build and verify bounded agent graphs for coding work. Use when Codex or Claude needs to plan independent implementation, research, or audit work; coordinate isolated workers; verify results against evidence; merge changes; or route targeted repairs.
+description: >
+  Plan and verify bounded agent graphs for complex coding work. Use when a
+  coding agent needs to coordinate independent implementation, research,
+  verification, auditing, isolated writers, merge ownership, or targeted
+  repair loops. Prefer a single loop for small or genuinely sequential tasks.
+license: MIT
 ---
 
 # Graph Engineering Workflow
@@ -37,7 +42,7 @@ These thirteen rules are the summary layer. Each names the section that specifie
 7. **One owner merges.** Parallel workers never jointly edit a shared artifact. → *Implementation Graph*
 8. **Isolate writers.** → *Implementation Graph*
 9. **Route repairs narrowly.** → *Repair and Conflict Routing*
-10. **Cap the graph.** Unset or zero-valued limits are not valid defaults. → *State and Artifact Contract*
+10. **Cap the graph.** Unset or zero-valued limits are not valid defaults, and the budget must name a unit this host can actually observe. → *State and Artifact Contract*
 11. **Gate irreversible actions.** Commit, push, deploy, publish, delete, payment, and external sends need an explicit human gate. → *Graph Plan Output*
 12. **Report evidence, not confidence.** Never call work complete because a worker says it is complete. → *Default Response Shape*
 13. **Close on a graded rubric.** Fix the criteria before the work starts; a fresh grader scores them against evidence. → *Acceptance Rubric*, *Fresh Grader Loop*
@@ -63,7 +68,7 @@ Run a short, read-only **Skill Discovery** before selecting the graph for any no
 
 Use two layers of routing:
 
-1. **Known routing map:** Match a node to a known companion skill when one is available: `grilling` for a user-requested or high-trade-off decision; `to-spec` or `domain-modeling` for requirements and domain design; `codebase-design` for codebase investigation and architecture; `research` for external research; `implement` or `tdd` for implementation and verification; `code-review` for code-quality audit; `devsecops` for security, privacy, or dependency audit; `diagnosing-bugs` for repair; `resolving-merge-conflicts` for merge; `handoff` for a final transfer; and `prototype` or `improve-codebase-architecture` when their specific purpose applies.
+1. **Known routing map:** Match a node to a known companion skill using [references/skill-routing.md](references/skill-routing.md).
 2. **Description-based routing:** Also consider any available skill whose description is more specific to the language, framework, artifact, domain, tool, or risk than the known map.
 
 Graph Engineering Workflow controls topology, ownership, isolation, limits, merge, repair, and reporting. A selected skill controls its domain workflow only; it must not expand the graph, override limits, or bypass human gates.
@@ -137,30 +142,6 @@ Choose the smallest topology that does the work:
 
 A single loop is valid. A graph is justified by real width, independent verification, or a meaningful route—not by the number of boxes in a diagram.
 
-## Canonical Shape for Coding Work
-
-```text
-User request
-  -> Skill Discovery (read-only)
-  -> clarify if needed
-  -> Codebase Investigator (read-only, for repository work)
-  -> graph architect + fake-edge test
-  -> optional external research fan-out where unresolved unknowns are independent
-  -> fresh evidence verification
-  -> one research merge owner
-  -> implementation fan-out where code ownership is independent
-  -> per-worker implementation loop and local anchors
-  -> isolated merge/integration
-  -> selected audit fan-out
-  -> audit merge and conflict decision
-  -> narrow repair route
-  -> final verification and report
-  -> acceptance gate (fresh grader scores the rubric; failures route back)
-  -> human gate before commit/push/deploy
-```
-
-This is a capability map, not a mandatory sequence for every task. The Codebase Investigator is the read-only front door for non-trivial repository work. External research, implementation branches, audits, and even the graph itself are optional: remove any node or edge that the actual task does not justify.
-
 ## External Research Graph
 
 Add external research only when the Codebase Investigator identifies an unresolved question that the repository cannot answer. Typical workers include requirements/API research, dependency research, regulatory or policy research, and security research against external guidance.
@@ -175,16 +156,7 @@ Do not merge worker summaries just because they agree. A fresh research verifier
 
 When findings conflict, preserve both claims and provenance, then route them to a conflict judge or a human decision. The merge owner must not silently choose one.
 
-A good research output looks like:
-
-```yaml
-claim: "..."
-source: "path, URL, document ID, or code location"
-evidence: "quoted span, command output, or exact symbol"
-freshness: "known date or unknown"
-confidence: 0.0
-status: verified|rejected|conflict|needs-human-decision
-```
+Each claim is returned in the fixed shape in [references/research-output.md](references/research-output.md).
 
 ## Implementation Graph
 
@@ -244,110 +216,25 @@ If audits disagree, do not average the opinions. Route the conflict to an indepe
 
 Keep the graph state structured and small. Do not copy every worker conversation into the parent context.
 
-```yaml
-task:
-  objective: ""
-  scope: ""
-  acceptance_criteria: []
-  constraints: []
-
-units: []
-edges: []
-parallel_groups: []
-
-workers:
-  - id: ""
-    role: ""
-    input: ""
-    output: ""
-    owner: ""
-    isolation: ""
-    selected_skills: []
-    status: pending|running|passed|failed
-
-skills:
-  - name: ""
-    node: ""
-    status: selected|skipped
-    reason: ""
-
-artifacts:
-  - path_or_id: ""
-    owner: ""
-    evidence: []
-    status: ""
-
-verifications:
-  - target: ""
-    anchor: ""
-    result: pass|fail|not_run
-    output_pointer: ""
-
-conflicts: []
-repairs: []
-limits:
-  max_workers: "<positive integer>"
-  max_concurrency: "<positive integer>"
-  max_waves: "<positive integer>"
-  max_retries: "<non-negative integer>"
-  time_limit: "<explicit duration>"
-  budget: "<explicit token or cost limit>"
-  max_grader_rounds: "<positive integer>"
-approvals:
-  graph: pending|approved|not_required
-  commit: pending|approved|not_requested
-  push: pending|approved|not_requested
-  deploy: pending|approved|not_requested
-
-acceptance:
-  mode: hybrid|score-only
-  grader: independent|self_graded
-  round: 0
-  score: "<passed>/<applicable>"
-  gate: open|closed|capped
-  criteria:
-    - id: ""
-      verdict: pass|fail|not_applicable
-      severity: blocker|major|minor|none
-      evidence: ""
-      defect: ""
-```
+Read [references/state-contract.md](references/state-contract.md) for the full state schema before
+dispatching a non-trivial graph, and again when recording limits, approvals, or acceptance results.
 
 ## Cross-Provider Use
 
-Use the host's native execution mechanism, but keep the graph contract unchanged:
+Use the host's native execution mechanism, but keep the graph contract unchanged. A platform
+limitation is not permission to claim that a worker ran, a verifier checked something, or
+parallelism occurred. Report what actually executed.
 
-- **Hermes:** use `delegate_task` for bounded isolated workers when appropriate; use native `clarify` for choices; keep one parent merge owner; verify returned artifacts yourself.
-- **Codex:** use native subagents or separate bounded `codex` executions when available; use isolated worktrees for concurrent writers; otherwise run the graph sequentially rather than pretending it was parallel.
-- **Claude Code:** use native subagents, teams, or isolated worktrees when available; keep verifier context separate from executor context; collect structured reports before merging.
-
-Get the acceptance grader a genuinely separate context on whatever host you are on: a fresh delegated task on Hermes, a separate subagent or `codex` execution on Codex, a subagent or worktree-scoped session on Claude Code. Hand it the rubric, the artifacts, the diff, and the recorded evidence — never the build transcript.
-
-When the host cannot give you an independent context at all, still grade the rubric, but record the result as `self_graded` and say so in the report. A self-graded score is a measurement the builder took of its own work; it never closes the acceptance gate on its own, and it needs a human decision in place of the gate.
-
-A platform limitation is not permission to claim that a worker ran, a verifier checked something, or parallelism occurred. Report what actually executed.
+Read [references/hosts.md](references/hosts.md) for per-host execution, isolation, and grader
+guidance before dispatching workers on a host you have not used in this session.
 
 ## Graph Plan Output
 
-Before executing a non-trivial graph, show a compact plan:
+Before executing a non-trivial graph, show a compact plan and ask for approval when the graph has
+material scope, cost, security, privacy, data-loss, or multi-writer trade-offs. Do not ask for
+approval merely to run a read-only inspection the user already requested.
 
-```text
-GRAPH PLAN
-Objective: ...
-Skill plan: selected skills by node and material skills skipped with reasons
-Independent units: ...
-Real dependencies: ...
-Parallel groups: ...
-Worker ownership/isolation: ...
-Verifier and anchors: ...
-Audit nodes selected: ...
-Repair routes: ...
-Acceptance rubric: grading mode, criteria that apply, and who grades them
-Limits: explicit numeric worker/concurrency/wave/retry/grader-round caps plus time and budget
-Human gates: ...
-```
-
-Ask for user approval when the graph has material scope, cost, security, privacy, data-loss, or multi-writer trade-offs. Do not ask for approval merely to run a read-only inspection the user already requested.
+Read [references/output-contracts.md](references/output-contracts.md) for the plan template.
 
 ## Acceptance Rubric
 
@@ -362,7 +249,7 @@ The graph is complete when a fresh grader scores **10/10** on the rubric below. 
 | C5 | Audits are anchored | Each audit used a real anchor, or is explicitly labeled an unverified review. |
 | C6 | Anchors actually ran | Tests, builds, scans, and type checks were executed, their output inspected, and the final artifact read back or run. |
 | C7 | Conflicts and repairs are routed | Every conflict and repair has an owner, a decision or unresolved marker, and the rechecks that followed. |
-| C8 | Limits held | Worker, concurrency, wave, retry, time, budget, and grader-round caps were set to explicit values and respected. |
+| C8 | Limits held | Worker, concurrency, wave, retry, time, and grader-round caps were set to explicit values and respected, and the budget either names an observable unit that held or is recorded as unenforceable with a reason. |
 | C9 | Human gates held | No commit, push, deploy, publish, delete, payment, or external send happened without an explicit approval for that exact action. |
 | C10 | The report is honest | Facts, assumptions, decisions, and unresolved risks are separated, and nothing is claimed that did not run. |
 
@@ -411,70 +298,20 @@ build -> fresh grader -> 10/10? -> yes -> human gate
                            no -> defect list -> narrow repair -> re-grade (round + 1)
 ```
 
-A grader round returns exactly this shape:
-
-```yaml
-mode: hybrid
-round: 2
-score: "11/13"
-gate: closed
-criteria:
-  - id: C6
-    verdict: pass
-    severity: none
-    evidence: "pnpm test -- auth/: 48 passed, 0 failed"
-  - id: C4
-    verdict: not_applicable
-    severity: none
-    evidence: "no external research node ran"
-  - id: C11
-    verdict: fail
-    severity: blocker
-    evidence: "POST /login with a valid password returns 500; src/auth/session.ts:74"
-    defect: "session write happens before the transaction commits"
-  - id: C9
-    verdict: fail
-    severity: major
-    evidence: "git log shows commit 4a1c2f9 with approvals.commit still pending"
-    defect: "committed without the human gate"
-```
+The round's output shape is fixed: see [references/grader-output.md](references/grader-output.md).
 
 For a small single-loop task, this collapses to one grading pass over a short rubric. Do not spawn a grader graph for work that a single fresh read can settle.
 
 ## Default Response Shape
 
-Report one consolidated result, not a transcript from every worker. Include:
+Report one consolidated result, not a transcript from every worker. Never fabricate worker output,
+test results, scan results, URLs, commits, or successful external actions.
 
-- graph shape actually used;
-- skills used by node and material skills skipped with reasons;
-- workers completed and artifacts they produced;
-- files or paths changed;
-- anchors actually run and their real results;
-- audit results by dimension;
-- the grading mode, the acceptance rubric score, the grader round it was reached in, and any criterion still failing or marked not applicable;
-- conflicts and unresolved issues;
-- retries or repair routes used;
-- work not run and why;
-- remaining risk and user decisions needed;
-- whether commit, push, deploy, or publish was requested and approved.
-
-Never fabricate worker output, test results, scan results, URLs, commits, or successful external actions.
+Read [references/output-contracts.md](references/output-contracts.md) for the required report contents.
 
 ## Pitfalls
 
-- Treating a linear checklist as a graph.
-- Adding an edge because the prose says “then.”
-- Spawning one worker per stage instead of one worker per independent unit.
-- Giving every worker the full shared conversation and calling the result independent.
-- Letting workers edit the same workspace or artifact without isolation.
-- Merging conflicting research without provenance or a judge.
-- Running an audit that has no anchor and reporting an opinion as verification.
-- Running every audit for every change.
-- Scaling before measuring cost, failure rate, and merge quality.
-- Using a role name as a security boundary.
-- Letting an optimizer change the metric, policy, or acceptance rule it is being judged against.
-- Treating a worker's self-report as proof that an artifact exists.
-- Giving the acceptance grader the build conversation and still calling it a fresh grader.
-- Rewriting, softening, or dropping a rubric criterion during the loop instead of fixing the work.
-- Reporting a rubric score without the evidence pointer that earned each pass.
-- Declaring completion after the grader round cap when criteria are still failing.
+The common failure modes — fake edges, unisolated writers, anchorless audits, self-graded
+acceptance, and treating a self-report as proof — are catalogued in
+[references/pitfalls.md](references/pitfalls.md). Read it when a graph feels wrong but no rule has
+obviously been broken.

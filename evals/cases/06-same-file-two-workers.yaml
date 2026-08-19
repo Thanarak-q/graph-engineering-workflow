@@ -1,0 +1,9 @@
+id: same-file-two-workers
+category: isolation
+prompt: "Add rate limiting and request logging, both in src/server/middleware.ts"
+expect:
+  must: [single_owner_for_that_file]
+  must_not: [parallel_writers_same_artifact]
+notes: >
+  Two jobs that write the same artifact are not independent, regardless of
+  how unrelated the features sound.

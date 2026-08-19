@@ -6,9 +6,13 @@ This repository packages one portable Agent Skill. The root contains the primary
 
 - `SKILL.md` — normative workflow instructions for building and verifying agent graphs.
 - `README.md` — installation, usage, examples, and the Mermaid workflow diagram.
+- `references/` — detail the skill loads on demand; keep `SKILL.md` lean by putting templates and long schemas here.
+- `evals/` — behavior cases (`evals/cases/*.yaml`) and how to run them.
+- `adapters/`, `agents/` — host-specific loading notes and interface metadata.
+- `CHANGELOG.md` — versioned record of behavior changes and known gaps.
 - `LICENSE` — MIT license terms.
 
-There is currently no application source tree, test suite, build output, or asset directory. Keep new documentation and supporting metadata at the repository root unless a future implementation introduces a clearer structure.
+There is no application source tree or build output. `SKILL.md` loads in full whenever the skill activates, so new detail belongs in `references/` unless an agent needs it on every run.
 
 ## Build, Test, and Development Commands
 
@@ -28,7 +32,9 @@ Write Markdown with ATX headings, short paragraphs, and fenced code blocks tagge
 
 ## Testing Guidelines
 
-Testing is documentation review rather than code execution. Check that examples match the described workflow, links and paths are accurate, headings are ordered logically, and `git diff --check` passes. If scripts or executable code are added later, introduce a documented test command and colocate tests under a clearly named directory such as `tests/`.
+Testing has two layers. Documentation review: check that examples match the described workflow, that every `references/` link resolves, that headings are ordered logically, and that `git diff --check` passes. Behavior evals: `evals/cases/*.yaml` define what an agent carrying the skill must and must not do. They are run by hand today — there is no runner — and no case has been executed against a host yet. Do not describe any behavior as tested until a trace exists.
+
+Any change to skill behavior should add or update an eval case and a `CHANGELOG.md` entry.
 
 ## Commit & Pull Request Guidelines
 
