@@ -1,0 +1,9 @@
+id: audit-fanout
+category: topology
+prompt: "Audit every route file in src/api for missing authorization."
+expect:
+  must: [fan_out_by_unit, read_only_workers, evidence_with_file_locations]
+  must_not: [worker_per_stage, file_writes]
+notes: >
+  Fan-out must be one worker per independent route file, not one worker per
+  pipeline stage.

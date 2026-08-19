@@ -50,6 +50,12 @@ v1 could run a graph correctly and still ship the wrong thing. v2 adds the missi
 - **Two grading modes.** `hybrid` grades and repairs; `score-only` measures and stops.
 - **Honest degradation.** Where a host cannot provide an independent context, the score is recorded as `self_graded` — and a self-graded score never closes the gate on its own.
 - **Skill routing reaches the workers.** Selected skills are now part of the work-unit contract and are graded by C2, instead of living only in the plan.
+- **Portable budgets.** `budget` is now `{kind, value}` over `worker_turns | tool_calls | tokens | cost | none` and must name a unit the host can actually observe — a cap in a unit the runtime cannot see is not a cap.
+- **Provider-neutral activation.** The frontmatter description no longer names specific hosts, and carries the negative boundary (prefer a single loop for small tasks) in the metadata itself.
+- **Progressive disclosure.** Templates and reference material moved to `references/`, loaded on demand, bringing the always-loaded core back under the skill-size guidance.
+- **Behavior evals.** Twenty-one cases in `evals/` covering topology, isolation, verification, acceptance, limits, routing, and gates.
+
+Full detail in the [CHANGELOG](CHANGELOG.md).
 
 ---
 
@@ -200,6 +206,18 @@ criteria:
 
 ---
 
+## Repository Layout
+
+| Path | What it is |
+| :--- | :--- |
+| `SKILL.md` | The skill. Loaded in full whenever the skill activates, so it stays lean. |
+| `references/` | Templates and detail the skill loads on demand — state contract, output contracts, host guidance, grader and research output shapes, routing map, pitfalls. |
+| `evals/` | Behavior cases: one prompt each, plus what must and must not happen. |
+| `adapters/`, `agents/` | Host-specific loading notes and interface metadata. |
+| `CHANGELOG.md` | What changed in each version, and the gaps still open. |
+
+---
+
 ## Quick Start: Installation
 
 ### Using the Skills CLI (Recommended)
@@ -230,27 +248,22 @@ npx --yes skills update graph-engineering-workflow --global --yes
 npx --yes skills remove graph-engineering-workflow --global --yes
 ```
 
-#### Manual Installation (macOS / Linux)
+#### Manual Installation
+
+The skill is a directory, not a single file — `SKILL.md` loads `references/` on demand, so copying
+`SKILL.md` alone installs a skill that points at files the agent cannot find.
+
 ```bash
 git clone https://github.com/Thanarak-q/graph-engineering-workflow.git
-cd graph-engineering-workflow
 
-# Antigravity / Codex / Universal Agent Skills
-mkdir -p "$HOME/.agents/skills/graph-engineering-workflow"
-cp SKILL.md "$HOME/.agents/skills/graph-engineering-workflow/SKILL.md"
-
-# Antigravity Global Config
-mkdir -p "$HOME/.gemini/config/skills/graph-engineering-workflow"
-cp SKILL.md "$HOME/.gemini/config/skills/graph-engineering-workflow/SKILL.md"
-
-# Claude Code
-mkdir -p "$HOME/.claude/skills/graph-engineering-workflow"
-cp SKILL.md "$HOME/.claude/skills/graph-engineering-workflow/SKILL.md"
-
-# Hermes Agent
-mkdir -p "${HERMES_HOME:-$HOME/.hermes}/skills/graph-engineering-workflow"
-cp SKILL.md "${HERMES_HOME:-$HOME/.hermes}/skills/graph-engineering-workflow/SKILL.md"
+# Copy the whole directory into your agent's skills directory
+cp -r graph-engineering-workflow "<your-agent-skills-dir>/graph-engineering-workflow"
 ```
+
+Global skills directories differ per agent and change as the ecosystem moves. Rather than mirror
+them here and let them rot, check the current paths in the
+[`skills` CLI documentation](https://github.com/vercel-labs/skills), or just let the CLI place the
+files for you with the command above.
 
 </details>
 

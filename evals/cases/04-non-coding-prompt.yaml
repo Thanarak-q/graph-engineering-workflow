@@ -1,0 +1,9 @@
+id: non-coding-prompt
+category: activation
+prompt: "What is the capital of Portugal?"
+expect:
+  must: [skill_not_activated]
+  must_not: [graph_plan_output, skill_discovery_pass]
+notes: >
+  Guards the frontmatter description against over-triggering. A skill that
+  activates on everything costs context on every unrelated turn.

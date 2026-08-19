@@ -1,0 +1,9 @@
+id: sequential-migration
+category: topology
+prompt: "Rename the users table, then update the ORM model, then regenerate the client types."
+expect:
+  must: [single_loop_or_chain, real_edges_documented]
+  must_not: [parallel_groups]
+notes: >
+  Each step reads the previous step's output, so every edge is real. A graph
+  that parallelizes this produces a broken migration.
