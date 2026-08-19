@@ -238,7 +238,7 @@ Read [references/output-contracts.md](references/output-contracts.md) for the pl
 
 ## Acceptance Rubric
 
-The graph is complete when a fresh grader scores **10/10** on the rubric below. The score is not an impression: it is the count of criteria that passed out of the criteria that apply. Each criterion is binary and must be answered with an evidence pointer — a `file:line`, a command and its output, or an artifact id. A criterion that the task does not exercise is marked `not_applicable` with a one-line reason and is excluded from the denominator, so a small graph may legitimately close at 7/7.
+The graph closes only when a fresh grader passes **every applicable criterion** — `passed == applicable` — or when an explicit human decision substitutes for an independent gate where that is allowed. The score is not an impression: it is the count of criteria that passed out of the criteria that apply. Each criterion is binary and must be answered with an evidence pointer — a `file:line`, a command and its output, or an artifact id. A criterion that the task does not exercise is marked `not_applicable` with a one-line reason and is excluded from the denominator, so a small graph may legitimately close at 7/7.
 
 | # | Criterion | Passes only when |
 |---|---|---|
@@ -259,7 +259,7 @@ Criteria C1–C10 grade how the graph was run. They do not grade whether the wor
 - each one passes only against a real anchor — a test, a run, an API call, an inspected output — never a worker's description of the behavior;
 - fix them before the first round along with C1–C10, and never add one mid-loop to justify work that was already done.
 
-A task with three acceptance criteria is graded out of thirteen. `10/10` on the process criteria alone is not a passing graph; it is a well-run graph whose outcome is still ungraded.
+A task with three acceptance criteria is graded out of thirteen, and a full score means 13/13. Passing all ten process criteria is not a passing graph on its own; it is a well-run graph whose outcome is still ungraded.
 
 ## Grading Modes
 
@@ -285,15 +285,15 @@ Announce the active mode in the graph plan and in the final report. If the user 
 
 The grader is a node in the graph, not a formality at the end.
 
-1. **Grade with a fresh context.** The grader receives the rubric, the final artifacts, the diff, and the recorded evidence — never the build conversation. A grader that watched the work is not an independent check, and reusing the builder's context is the fastest way to a fake 10/10.
+1. **Grade with a fresh context.** The grader receives the rubric, the final artifacts, the diff, and the recorded evidence — never the build conversation. A grader that watched the work is not an independent check, and reusing the builder's context is the fastest way to a fake pass.
 2. **Return a defect list, not a verdict.** Every `fail` carries the criterion id, the evidence that shows the failure, a severity of `blocker`, `major`, or `minor`, and the specific defect. `major` and `minor` set repair order; only the pass/fail state decides whether the gate opens.
 3. **Route failures narrowly.** Each defect goes to the responsible worker through the existing repair router, not back through the whole graph.
 4. **Re-grade the whole rubric.** The next round re-checks every criterion, not only the repaired ones, so a fix cannot silently break a criterion that already passed.
 5. **Never edit the rubric mid-loop.** The criteria are fixed before the first round. If a criterion turns out to be wrong, stop the loop, say so, and get the user's decision — do not soften the criterion to make the score rise.
-6. **Stop at the cap.** (`hybrid` only.) The loop ends at `10/10` or at `max_grader_rounds`. Hitting the cap with criteria still failing is a capped result, not a completed one; report the score, the open defects, and what remains.
+6. **Stop at the cap.** (`hybrid` only.) The loop ends at a full applicable score or at `max_grader_rounds`. Hitting the cap with criteria still failing is a capped result, not a completed one; report the score, the open defects, and what remains.
 
 ```text
-build -> fresh grader -> 10/10? -> yes -> human gate
+build -> fresh grader -> full score? -> yes -> human gate
                            |
                            no -> defect list -> narrow repair -> re-grade (round + 1)
 ```

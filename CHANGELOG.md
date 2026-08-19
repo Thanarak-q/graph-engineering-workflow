@@ -4,6 +4,22 @@ All notable changes to this skill are recorded here. Versions follow
 [Semantic Versioning](https://semver.org/); for an instruction set, "breaking" means a change that
 alters what an agent carrying the skill will do.
 
+## [2.0.1] — 2026-08-19
+
+Two contradictions introduced by the v2.0.0 work, both found in review.
+
+### Fixed
+
+- **`10/10` no longer means "complete".** The rubric section still opened with "complete when a
+  fresh grader scores 10/10" — wording written before outcome criteria existed — while the section
+  directly below it said a task with three acceptance criteria is graded out of thirteen and that
+  ten process passes are not a passing graph. The gate condition is now stated once, as
+  `passed == applicable`, and the loop and its diagram end on a full applicable score rather than a
+  fixed number.
+- **Budget wording reconciled.** The Graph Plan template required "a budget in a unit this host can
+  observe", which is impossible to satisfy under `kind: none` — the escape hatch the state contract
+  explicitly allows. The template now accepts an observable cap *or* `none` with a reason.
+
 ## [2.0.0] — 2026-08-19
 
 v1 could run a graph correctly and still ship the wrong thing. It verified that every step was

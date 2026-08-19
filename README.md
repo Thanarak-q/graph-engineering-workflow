@@ -160,7 +160,7 @@ The graph closes when a fresh grader returns a full score. The score is not an i
 `C11`, `C12`, `C13`… are derived from the acceptance criteria confirmed with you at the start — never from what the workers happened to build. Each passes only against a real anchor: a test, a run, an API call, an inspected output.
 
 > [!IMPORTANT]
-> `10/10` on the process criteria alone is **not** a passing graph. It is a well-run graph whose outcome is still ungraded.
+> Passing all ten process criteria is **not** a passing graph on its own. It is a well-run graph whose outcome is still ungraded — a full score means every applicable criterion, process and outcome alike.
 
 ### Grading modes
 
