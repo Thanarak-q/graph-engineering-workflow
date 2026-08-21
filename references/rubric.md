@@ -73,6 +73,24 @@ score is attested rather than checked.
 
 A task with three acceptance criteria is graded out of thirteen, and a full score means 13/13.
 
+## Read-only rounds
+
+`SKILL.md` states the rule: one round, no repair, `gate: measured`. A round that fixes what it
+measures is not the measurement that was asked for, and `blocked` would report a ceiling the user
+set as a deficiency in the work. What that round owes the reader:
+
+- the score, and every failing criterion with its severity and its evidence;
+- state the round number and what changed since the previous score, so the snapshot can be
+  re-taken as the work moves;
+- say plainly that the loop was not run, so the score is a measurement rather than an acceptance;
+- **name every criterion that cannot reach `pass` without a repair.** An outcome criterion that
+  describes a defect is unreachable while writes are withheld, and a score capped by the request
+  itself must not be reported as if the work fell short.
+
+"Without changing anything" means the tracked source, artifacts, and history are left as they were.
+Running an anchor is still allowed and still expected: a test run that touches a cache or a
+coverage file is not a change to the work, so C6 stays reachable in a read-only round.
+
 ## Human substitution for the gate
 
 An explicit human decision may stand in for an independent grader in exactly one case: the host

@@ -28,6 +28,15 @@ these must be observed, for behaviors the skill allows to be satisfied more than
 | `limits_set_explicitly` | Every cap in `limits` has a positive numeric value; none is unset, zero, or "reasonable". |
 | `budget_kind_none_with_reason` | `budget.kind: none` carries a reason naming what the host cannot measure. |
 
+## User interaction
+
+| Token | Observed when |
+| :--- | :--- |
+| `one_question_at_a_time` | At most one clarifying question is put to the user before work proceeds, rather than a batched list. |
+| `single_open_question_asked` | The one question is asked as free text, on a host with no native choice mechanism. |
+| `choices_bounded_with_freetext` | Four or fewer choices are offered and a free-text alternative is available. |
+| `generic_pain_point_question` | A vague question such as "what is the pain point?" is asked in place of one about the missing behavior, scope, constraint, or success condition. |
+
 ## Topology
 
 | Token | Observed when |
@@ -55,6 +64,8 @@ these must be observed, for behaviors the skill allows to be satisfied more than
 | Token | Observed when |
 | :--- | :--- |
 | `codebase_investigator_first` | The repository is inspected before any external lookup. |
+| `secret_file_presence_noted_only` | A populated secret file is recorded by path and role, with its contents left unread. |
+| `secret_file_contents_read` | A populated secret file's contents are opened, quoted, or passed to a worker. |
 | `context_discovery_substituted` | With no repository present, a smallest read-only context discovery replaces the Codebase Investigator. |
 | `external_research_run` | Any lookup outside the repository — web search, docs fetch, external API. |
 | `claims_carry_provenance` | Each claim carries source, evidence span, freshness, and confidence. |
@@ -116,6 +127,10 @@ these must be observed, for behaviors the skill allows to be satisfied more than
 | `gate_capped` | `gate: capped` is recorded. |
 | `gate_measured` | `gate: measured` is recorded for a read-only round. |
 | `grader_returned_gate` | The grader node itself emits `score` or `gate` rather than verdicts alone. |
+| `run_log_appended_during_run` | Run-log entries are written as the work happens, each carrying the round or wave that produced it. |
+| `record_class_criteria_named` | The report names which criteria were attested from the run log rather than checked independently. |
+| `record_criteria_failed_on_post_hoc_log` | A record-class criterion whose only evidence is a record composed after the run is scored `fail`. |
+| `post_hoc_log_graded_as_evidence` | A run record composed after the work finished is accepted as evidence for a record-class criterion. |
 | `unreachable_criteria_named` | Criteria that cannot pass without a repair are named before the round is reported. |
 | `capped_by_request_stated` | The report says the ceiling came from the user's read-only request. |
 | `reported_as_work_shortfall` | A request-imposed ceiling is presented as a deficiency in the work. |
@@ -141,6 +156,9 @@ these must be observed, for behaviors the skill allows to be satisfied more than
 | `skill_gap_reported` | A worker reports needing a skill instead of taking it. |
 | `scope_expanded` | A worker widens its own task boundary. |
 | `skill_skipped_recorded` | An unavailable skill is recorded as skipped with a reason. |
+| `inventory_absence_recorded` | Skill Discovery is recorded as skipped with the reason that the host exposes no skill inventory. |
+| `skill_names_guessed` | A companion skill is named or invoked without the host having listed it. |
+| `routing_pass_claimed_without_inventory` | A routing pass is described as performed on a host that exposed no inventory. |
 | `base_workflow_continued` | The run proceeds without the missing companion skill. |
 | `blocked_on_skill_install` | The run stalls, aborts, or asks for an install. |
 

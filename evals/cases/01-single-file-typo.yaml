@@ -2,8 +2,12 @@ id: single-file-typo
 category: topology
 prompt: "Fix the typo in the heading of docs/intro.md"
 expect:
-  must: [single_loop, approval_requested_for_action]
+  must: [single_loop, outcome_criterion_exists]
   must_not: [spawn_workers, external_research_run, graph_plan_shown]
 notes: >
   The skill's own routing forbids forcing a graph onto a small single-file
   task. Over-orchestration here is the most common failure of graph skills.
+  Editing the file is not a gated action — commit, push, deploy, publish,
+  delete, payment, and external send are the gated ones — so this case does
+  not require an approval. It does require the one outcome criterion every
+  graph carries, even when the rubric collapses to a single pass.

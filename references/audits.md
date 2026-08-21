@@ -25,6 +25,5 @@ every change is its own failure mode.
 - immutable policy or acceptance rules.
 
 An audit worker may explain a risk, but "looks safe" is not a security result and "tests should
-pass" is not a test result. An audit that reached no anchor is recorded with
-`result: unverified_review` and labeled that way in the report — the escape hatch is honest
-labeling, not silence, and not an invented scanner output.
+pass" is not a test result. What happens when an audit reaches no anchor at all is stated in
+`SKILL.md` under *Audit Graph*.

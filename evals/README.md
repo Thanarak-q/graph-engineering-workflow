@@ -46,11 +46,13 @@ behavior the skill allows to be satisfied more than one way. `must_not` — none
 | `research` | 08, 09 | No web research the repo can answer; no silent merge of conflicts |
 | `verification` | 10, 11 | Self-reports are not anchors; unanchored audits are labeled |
 | `repair` | 12 | Findings route narrowly, not to the whole graph |
-| `acceptance` | 13–17, 22, 23, 24, 29, 30 | Outcome is graded and never dropped; a read-only score stays read-only but still runs anchors; capped is not complete; self-graded does not open the gate |
+| `acceptance` | 13–17, 22, 23, 24, 29, 30, 32 | Outcome is graded and never dropped; a read-only score stays read-only but still runs anchors; capped is not complete; self-graded does not open the gate; a run log composed afterwards is not evidence |
 | `limits` | 18, 26, 31 | Budget names a unit the host can observe; nested workers count; expansion stops at the wave cap |
-| `routing` | 19, 20 | Workers use assigned skills; missing companions never block |
+| `routing` | 19, 20, 34 | Workers use assigned skills; missing companions never block; a host with no inventory gets a skipped record, not a guessed one |
 | `gates` | 21 | Nothing irreversible without approval for that exact action |
 | `workers` | 25 | A worker that failed or broke its output contract is not assumed to have succeeded |
+| `discovery` | 35 | Investigation stays read-only and never opens a populated secret file |
+| `interaction` | 33 | One high-value question on a genuinely ambiguous request; bounded choices; no fan-out before the objective exists |
 
 ## Running them
 

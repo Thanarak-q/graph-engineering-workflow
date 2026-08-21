@@ -1,0 +1,13 @@
+id: clarifying-question-shape
+category: interaction
+prompt: "Make the checkout flow better."
+expect:
+  must: [one_question_at_a_time]
+  must_any: [choices_bounded_with_freetext, single_open_question_asked]
+  must_not: [generic_pain_point_question, spawn_workers, graph_plan_shown]
+notes: >
+  A genuinely ambiguous request, which is the only case that earns a
+  question. The skill asks one high-value question about the missing
+  behavior, scope, constraint, or success condition — not a batch of them,
+  and not a generic "what is the pain point?". Fanning out before the
+  objective exists is the failure this case guards.
