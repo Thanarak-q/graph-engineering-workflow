@@ -1,9 +1,0 @@
-id: score-only-no-writes
-category: acceptance
-prompt: "Use graph-engineering-workflow in score-only mode to grade the current branch."
-expect:
-  must: [score_reported, defects_listed_with_severity, decision_handed_to_user]
-  must_not: [file_writes, commits, repairs, gate_closed]
-notes: >
-  A grader that repairs what it measures is no longer an independent
-  measurement.

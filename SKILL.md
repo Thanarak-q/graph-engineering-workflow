@@ -12,9 +12,9 @@ license: MIT
 
 ## Purpose
 
-Use this skill to turn a coding request into a task graph made of bounded agent loops, independent workers, fresh verifiers, evidence anchors, and explicit merge and repair rules. It is a graph-orchestration discipline, not a fixed implementation checklist and not a reason to spawn agents for every task.
+Turn a coding request into a task graph of bounded agent loops, independent workers, fresh verifiers, evidence anchors, and explicit merge and repair rules. This is a graph-orchestration discipline, not a fixed checklist and not a reason to spawn agents for every task.
 
-The graph should make independent work wider, not make sequential work more complicated. A worker is allowed to contain its own loop: do the work, check it against a real anchor, repair it, and report an inspectable artifact.
+The graph should make independent work wider, not make sequential work more complicated. A worker may contain its own loop: do the work, check it against a real anchor, repair it, and report an inspectable artifact.
 
 ## Task Routing
 
@@ -31,7 +31,7 @@ Do not force this graph for a small, clear, single-file task or for work whose s
 
 ## Operating Principles
 
-These thirteen rules are the summary layer. Each names the section that specifies it, and that section is normative — when this list and a section appear to disagree, the section wins.
+These fourteen rules are the summary layer. Each names the section that specifies it, and that section is normative — when this list and a section appear to disagree, the section wins.
 
 1. **Architect before fan-out.** Identify the units of work, their inputs and outputs, and the exact dependencies between them. → *Graph Construction*
 2. **Delete fake edges.** An edge exists only when downstream work must read upstream output. → *Apply the fake-edge test*
@@ -42,10 +42,11 @@ These thirteen rules are the summary layer. Each names the section that specifie
 7. **One owner merges.** Parallel workers never jointly edit a shared artifact. → *Implementation Graph*
 8. **Isolate writers.** → *Implementation Graph*
 9. **Route repairs narrowly.** → *Repair and Conflict Routing*
-10. **Cap the graph.** Unset or zero-valued limits are not valid defaults, and the budget must name a unit this host can actually observe. → *State and Artifact Contract*
-11. **Gate irreversible actions.** Commit, push, deploy, publish, delete, payment, and external sends need an explicit human gate. → *Graph Plan Output*
-12. **Report evidence, not confidence.** Never call work complete because a worker says it is complete. → *Default Response Shape*
-13. **Close on a graded rubric.** Fix the criteria before the work starts; a fresh grader scores them against evidence. → *Acceptance Rubric*, *Fresh Grader Loop*
+10. **Cap the graph.** Unset or zero-valued limits are not valid defaults, the budget must name a unit this host can actually observe, and every cap needs a recorded observed count or it cannot be said to have held. → *State and Artifact Contract*
+11. **Gate irreversible actions.** Commit, push, deploy, publish, delete, payment, and external sends each need an explicit human approval for that exact action, granted after the change exists. A stated intent up front is not an approval. → *Graph Plan Output*
+12. **Report evidence, not confidence.** Never call work complete because a worker says it is complete, and report on every outcome — including a capped or abandoned run. → *Default Response Shape*
+13. **Close on a graded rubric.** Fix the criteria before the work starts; a fresh grader scores them against evidence. Every graph carries at least one outcome criterion. → *Acceptance Rubric*, *Fresh Grader Loop*
+14. **Never infer a worker's success.** A worker that fails, returns nothing, or breaks its output contract has not done its unit. → *Define work units*
 
 ## User Interaction
 
@@ -58,42 +59,27 @@ Use choices when the decision has a bounded set of answers and allow a free-text
 - let the user correct the choice;
 - do not hide a meaningful trade-off inside a default.
 
-On Hermes, use the native `clarify` tool when available. On Codex or Claude Code, present a short numbered choice list and accept a typed answer.
+Use the host's native choice mechanism where it has one, and a short numbered list otherwise.
 
-After clarification, state the confirmed objective, scope, acceptance criteria, constraints, and unresolved questions. If the request is clear and low-risk, a concise confirmation is enough. For a multi-writer, sensitive, or high-impact graph, show the graph plan and wait for approval before implementation.
+After clarification, state the confirmed objective, scope, acceptance criteria, constraints, and unresolved questions. The acceptance criteria are what the outcome criteria C11+ are derived from, so confirm at least one even when the request is clear. If the request is clear and low-risk, a concise confirmation is enough. For a multi-writer, sensitive, or high-impact graph, show the graph plan and wait for approval before implementation.
 
 ## Skill Discovery and Routing
 
 Run a short, read-only **Skill Discovery** before selecting the graph for any non-trivial request. Inspect the skills available in the current environment and match them to the request, the repository context, and candidate nodes. Skip it for work small enough that no companion skill would change the approach; a single-file fix does not need a routing pass.
 
-Use two layers of routing:
+Where the host exposes no skill inventory, do not guess at names and do not claim a routing pass happened. Record the discovery as skipped with that reason and run the base workflow.
 
-1. **Known routing map:** Match a node to a known companion skill using [references/skill-routing.md](references/skill-routing.md).
-2. **Description-based routing:** Also consider any available skill whose description is more specific to the language, framework, artifact, domain, tool, or risk than the known map.
+Route in two layers: match a node to a known companion skill, then consider any available skill whose description is more specific to the language, framework, artifact, domain, tool, or risk than the known map.
 
-Graph Engineering Workflow controls topology, ownership, isolation, limits, merge, repair, and reporting. A selected skill controls its domain workflow only; it must not expand the graph, override limits, or bypass human gates.
+This skill controls topology, ownership, isolation, limits, merge, repair, and reporting. A selected skill controls its domain workflow only. Pass a worker only the skills selected for that node, with its task boundary and the reason each was chosen; a worker uses what it was handed and reports a gap rather than shopping for more. A missing companion skill is recorded as skipped and never blocks the run.
 
-Choose skills for their expected value, not because they match a keyword. Multiple skills may be selected when their responsibilities do not overlap. When they overlap, select the more specific or safer skill and record why the other was skipped. Pass a worker only the skills selected for that node, with its task boundary and reason for selection.
-
-A worker uses the skills it was handed and does not go shopping for more. Its own environment may list skills the parent did not select; that listing is not a mandate, and a worker that decides it needs another skill reports the gap in its output instead of expanding its own scope. The parent owns routing because only the parent can see the whole graph.
-
-Route the acceptance grader like any other node. It may use a read-only review or audit skill that helps it check a criterion, and it may never use a skill that writes, repairs, or otherwise changes what it is grading.
-
-Skill Discovery runs before the graph is selected, so its first pass is an inventory, not a final assignment. Bind skills to nodes once the units exist, and record any skill added later with the round or node that introduced it.
-
-If a selected skill is unavailable at execution time or conflicts with the task constraints, continue with the base workflow and record it as skipped. Do not install, request installation of, or block on an optional companion skill during a graph run. The README may recommend companion skills for future installation.
+Read [references/skill-routing.md](references/skill-routing.md) for the routing map and the full rules on worker scope, grader routing, and unavailable skills.
 
 ## Graph Construction
 
 ### 1. Codebase Investigator (read-only)
 
-For non-trivial repository work, run a **Codebase Investigator** before the Graph Architect and before any external research. It maps the project context that the graph needs:
-
-- repository and directory rules;
-- relevant files and existing patterns;
-- current tests and verification commands;
-- interfaces, schemas, dependencies, and ownership boundaries;
-- current diff and worktree state when relevant.
+For non-trivial repository work, run a **Codebase Investigator** before the Graph Architect and before any external research. It maps repository and directory rules, relevant files and existing patterns, current tests and verification commands, interfaces, schemas, dependencies, ownership boundaries, and the current diff and worktree state where relevant.
 
 Its output is a compact repository map, candidate work units, known ownership conflicts, and unknowns that may justify external research. Do not inspect populated secret files. Do not modify files during discovery.
 
@@ -120,6 +106,12 @@ Every unit must declare:
 - selected skills for this node, each with the reason it was chosen;
 - retry and stop condition.
 
+These are the fields C2 grades, so they live in the run record rather than only in the dispatch prompt.
+
+**A worker's result is not assumed.** A worker that fails, times out, returns nothing, or returns output that does not match its declared output contract is recorded as `failed` or `unusable_output` with a reason. Retry it within `max_retries`, route the unit to another owner, or record the unit as not done. Continuing as if the output arrived — or describing its intended artifact as produced — is the failure this rule exists to stop.
+
+**Nested workers are still workers.** A worker owning a bounded subgraph may spawn its own workers up to `max_depth`, and every one of them counts against `max_workers`. The cap is on the graph, not on one level of it.
+
 ### 3. Apply the fake-edge test
 
 For every proposed edge, answer:
@@ -136,7 +128,7 @@ Choose the smallest topology that does the work:
 - **fan-out/fan-in:** independent workers run, then one owner aggregates;
 - **conditional route:** a finding or score chooses the next path;
 - **repair loop:** a failed anchor returns work to a bounded worker;
-- **discovery expansion:** finders produce new units until the stop condition is met;
+- **discovery expansion:** finders produce new units until the stop condition is met, each dispatch counting as one **wave** against `max_waves`;
 - **audit fan-out:** independent audit dimensions inspect the same integrated artifact;
 - **hierarchical graph:** a bounded subgraph owns one larger area.
 
@@ -174,28 +166,11 @@ Do not report a successful implementation from a worker's prose alone. Read the 
 
 ## Audit Graph
 
-After integration, select audit nodes based on the change and its risk. Do not run every audit by habit.
+After integration, select audit nodes based on the change and its risk. Do not run every audit by habit, and prefer a deterministic anchor over an opinion in every case.
 
-Possible audit workers:
+An audit worker may explain a risk, but “looks safe” is not a security result and “tests should pass” is not a test result. An audit that reached no anchor is recorded with `result: unverified_review` and labeled that way in the report — the escape hatch is honest labeling, not silence, and never an invented scanner output.
 
-- **security:** authentication, authorization, injection, secrets, unsafe defaults, deserialization, dependency risk;
-- **privacy:** PII, logging, data exposure, retention, access boundaries, telemetry, and data flow;
-- **functional:** acceptance criteria and expected behavior;
-- **input/edge:** empty, malformed, boundary, oversized, unexpected, and adversarial input;
-- **regression:** behavior outside the changed area;
-- **code quality:** error handling, duplication, complexity, maintainability, type safety, and unintended diff;
-- **dependency/SCA:** versions, vulnerabilities, licenses, and lockfile integrity.
-
-Prefer deterministic anchors:
-
-- actual test commands and their output;
-- compiler, type checker, and linter output;
-- security or dependency scanner output;
-- an API call or integration check;
-- a direct code/data-flow inspection with exact locations;
-- immutable policy or acceptance rules.
-
-An audit worker may explain a risk, but “looks safe” is not a security result and “tests should pass” is not a test result.
+Read [references/audits.md](references/audits.md) for the audit dimensions and the anchors to prefer.
 
 ## Repair and Conflict Routing
 
@@ -216,6 +191,8 @@ If audits disagree, do not average the opinions. Route the conflict to an indepe
 
 Keep the graph state structured and small. Do not copy every worker conversation into the parent context.
 
+Two properties of that state are normative wherever it is kept. Limits are explicit positive values, each with an observed count recorded against it. And the run log is **appended during the run**, not composed after it — the acceptance grader reads it instead of the build transcript, so a record written afterward is an account of the work rather than evidence of it.
+
 Read [references/state-contract.md](references/state-contract.md) for the full state schema before
 dispatching a non-trivial graph, and again when recording limits, approvals, or acceptance results.
 
@@ -234,68 +211,62 @@ Before executing a non-trivial graph, show a compact plan and ask for approval w
 material scope, cost, security, privacy, data-loss, or multi-writer trade-offs. Do not ask for
 approval merely to run a read-only inspection the user already requested.
 
+The plan names every irreversible action the graph could reach — commit, push, deploy, publish,
+delete, payment, external send — and each one still needs its own approval at the moment it is
+reached, once the change exists and can be inspected.
+
 Read [references/output-contracts.md](references/output-contracts.md) for the plan template.
 
 ## Acceptance Rubric
 
-The graph closes only when a fresh grader passes **every applicable criterion** — `passed == applicable` — or when an explicit human decision substitutes for an independent gate where that is allowed. The score is not an impression: it is the count of criteria that passed out of the criteria that apply. Each criterion is binary and must be answered with an evidence pointer — a `file:line`, a command and its output, or an artifact id. A criterion that the task does not exercise is marked `not_applicable` with a one-line reason and is excluded from the denominator, so a small graph may legitimately close at 7/7.
+The graph is accepted only when a fresh grader passes **every applicable criterion** — `passed == applicable`. The score is not an impression: it is the count of criteria that passed out of the criteria that apply. Each criterion is binary and must be answered with an evidence pointer — a `file:line`, a command and its output, or an artifact id.
 
-| # | Criterion | Passes only when |
-|---|---|---|
-| C1 | Topology is real | Independent units and real edges are documented, and every removed fake edge is named. |
-| C2 | Workers are bounded | Each worker has a stated input, output, owner, write boundary, and stop condition, and was handed the skills its node was assigned in the graph plan. |
-| C3 | Writers are isolated | Every concurrent writer had a separate worktree, branch, container, or equivalent. |
-| C4 | Research is traceable | Each claim carries source, evidence span, freshness, and confidence, and passed fresh verification. |
-| C5 | Audits are anchored | Each audit used a real anchor, or is explicitly labeled an unverified review. |
-| C6 | Anchors actually ran | Tests, builds, scans, and type checks were executed, their output inspected, and the final artifact read back or run. |
-| C7 | Conflicts and repairs are routed | Every conflict and repair has an owner, a decision or unresolved marker, and the rechecks that followed. |
-| C8 | Limits held | Worker, concurrency, wave, retry, time, and grader-round caps were set to explicit values and respected, and the budget either names an observable unit that held or is recorded as unenforceable with a reason. |
-| C9 | Human gates held | No commit, push, deploy, publish, delete, payment, or external send happened without an explicit approval for that exact action. |
-| C10 | The report is honest | Facts, assumptions, decisions, and unresolved risks are separated, and nothing is claimed that did not run. |
+**C1–C10 grade how the graph was run** — topology, bounded workers, isolated writers, traceable research, anchored audits, anchors that ran, routed conflicts and repairs, limits, human gates, an honest report. They do not grade whether the work is correct, and a graph that follows every rule while shipping the wrong behavior passes all ten.
 
-Criteria C1–C10 grade how the graph was run. They do not grade whether the work is correct, and a graph that follows every rule while shipping the wrong behavior can still pass all ten. So the rubric also carries one **outcome criterion per acceptance criterion** confirmed with the user, numbered from C11:
+**C11 upward grade the outcome**, one criterion per acceptance criterion confirmed with the user, derived from `task.acceptance_criteria` and never from what the workers happened to build. **Every graph carries at least one.** Where the user confirmed none explicitly, derive one from the request, state it in the graph plan, and grade it. A score built from C1–C10 alone is never an acceptance; it is a well-run graph whose outcome is ungraded, and it reports as `blocked`.
 
-- derive them from `task.acceptance_criteria`, not from what the workers happened to build;
-- each one passes only against a real anchor — a test, a run, an API call, an inspected output — never a worker's description of the behavior;
-- fix them before the first round along with C1–C10, and never add one mid-loop to justify work that was already done.
+A process criterion the task does not exercise is marked `not_applicable` with a one-line reason and leaves the denominator, so a small graph may legitimately be accepted at 8/8. **An outcome criterion is never `not_applicable`** — dropping the user's own requirement out of the denominator is a rubric edit wearing a verdict's clothes. A requirement that genuinely stopped applying is a scope change the user decides.
 
-A task with three acceptance criteria is graded out of thirteen, and a full score means 13/13. Passing all ten process criteria is not a passing graph on its own; it is a well-run graph whose outcome is still ungraded.
+Criteria are not equally checkable, so each declares an evidence class: `artifact` and `rerun` the grader settles for itself, `record` it can only read from the run log. Record-class criteria are graded against the builder's own account — which is why the log is appended during the run, and why no arrangement of record-class passes opens the gate while an outcome criterion is failing.
 
-## Grading Modes
+Read [references/rubric.md](references/rubric.md) for the ten process criteria, their pass conditions and evidence classes, the outcome-criterion rules, and the one case in which a human decision may stand in for an independent grader.
 
-The rubric runs in one of two modes. **`hybrid` is the default**; use it unless the user names another mode.
+## The Grading Loop
 
-| Mode | Grader | Repair | Writes | Ends when |
-|---|---|---|---|---|
-| `hybrid` (default) | Scores the rubric and returns a defect list | Routes every failure to its owner and re-grades | Yes | Full score, or `max_grader_rounds` is reached |
-| `score-only` | Scores the rubric and returns a defect list | None | No | The user says so, or there is nothing new to grade |
+The rubric runs one way: a fresh grader scores it, every failure routes to its owner, and the next round re-grades everything. The loop is not optional and has no variant that grades without repairing. Independence comes from context isolation and ownership routing, not from banning repair — the grader never repairs anything in any case.
 
-Enter `score-only` when the user asks for it by name, or asks to grade, score, audit, or review without changing anything. In this mode:
+A read-only score is still available, as a request rather than a named mode. When the user asks to grade, score, audit, or review **without changing anything**:
 
-- do not edit, repair, commit, or run anything that writes — the mode is read-only, and its value comes from being an untouched measurement;
-- report the score, every failing criterion, its severity, and its evidence, then stop and hand the decision to the user;
-- keep grading rounds cheap and repeatable so the score can be re-taken as the work moves, and state the round number and what changed since the previous score;
-- never repair a defect just because it is small. A grader that fixes what it measures is no longer an independent measurement, and its next score is worthless.
+- run exactly one round and stop;
+- record `gate: measured`, not `blocked` — no gate decision was taken, because none was asked for;
+- report the score, every failing criterion, its severity, and its evidence, then hand the decision to the user;
+- state the round number and what changed since the previous score, so the snapshot can be re-taken as the work moves;
+- say plainly that the loop was not run, so the score is a measurement rather than an acceptance;
+- **name every criterion that cannot reach `pass` without a repair.** An outcome criterion that describes a defect is unreachable while writes are withheld, and a score capped by the request itself must not be reported as if the work fell short.
 
-`score-only` does not close the graph. A passing score from it is a measurement, not an acceptance; the work still needs a `hybrid` gate or an explicit human decision before it counts as complete.
+"Without changing anything" means the tracked source, artifacts, and history are left as they were. Running an anchor is still allowed and still expected — a test run that touches a cache or a coverage file is not a change to the work, and C6 stays reachable in a read-only round. What a read-only round may not do is repair.
 
-Announce the active mode in the graph plan and in the final report. If the user asks for repairs while in `score-only`, switch to `hybrid` and say that the mode changed.
+Do not repair a defect during a read-only round, however small — a round that fixes what it measures is not the measurement the user asked for. If the user then asks for repairs, run the loop and say that it started.
+
+Say in the graph plan whether the loop will run, and say the same in the final report.
 
 ## Fresh Grader Loop
 
 The grader is a node in the graph, not a formality at the end.
 
-1. **Grade with a fresh context.** The grader receives the rubric, the final artifacts, the diff, and the recorded evidence — never the build conversation. A grader that watched the work is not an independent check, and reusing the builder's context is the fastest way to a fake pass.
-2. **Return a defect list, not a verdict.** Every `fail` carries the criterion id, the evidence that shows the failure, a severity of `blocker`, `major`, or `minor`, and the specific defect. `major` and `minor` set repair order; only the pass/fail state decides whether the gate opens.
+1. **Grade with a fresh context.** The grader receives the rubric, the final artifacts, the diff, and the run record — never the build conversation. A grader that watched the work is not an independent check, and reusing the builder's context is the fastest way to a fake pass.
+2. **Return a defect list, not a verdict.** Per criterion: id, class, evidence, and for a `fail` a severity of `blocker`, `major`, or `minor` plus the specific defect — plus the criteria it can see are unreachable. The grader does not return `score` or `gate`; a fresh context does not know the round number, how many rounds remain, or whether a read-only measurement was asked for. The loop controller computes those from the verdicts and `max_grader_rounds`. Severity sets repair order; only pass/fail decides whether the gate opens.
 3. **Route failures narrowly.** Each defect goes to the responsible worker through the existing repair router, not back through the whole graph.
 4. **Re-grade the whole rubric.** The next round re-checks every criterion, not only the repaired ones, so a fix cannot silently break a criterion that already passed.
-5. **Never edit the rubric mid-loop.** The criteria are fixed before the first round. If a criterion turns out to be wrong, stop the loop, say so, and get the user's decision — do not soften the criterion to make the score rise.
-6. **Stop at the cap.** (`hybrid` only.) The loop ends at a full applicable score or at `max_grader_rounds`. Hitting the cap with criteria still failing is a capped result, not a completed one; report the score, the open defects, and what remains.
+5. **Never edit the rubric mid-loop.** The criteria are fixed before the first round. If a criterion turns out to be wrong, stop the loop, say so, and get the user's decision — do not soften the criterion, drop it, or mark it not applicable to make the score rise.
+6. **Stop at the cap.** The loop ends at a full applicable score or at `max_grader_rounds`. Hitting the cap with criteria still failing is a capped result, not a completed one; report the score, the open defects, and what remains.
 
 ```text
 build -> fresh grader -> full score? -> yes -> human gate
                            |
                            no -> defect list -> narrow repair -> re-grade (round + 1)
+                                                                   |
+                                                        rounds spent -> capped: report and stop
 ```
 
 The round's output shape is fixed: see [references/grader-output.md](references/grader-output.md).
@@ -305,7 +276,9 @@ For a small single-loop task, this collapses to one grading pass over a short ru
 ## Default Response Shape
 
 Report one consolidated result, not a transcript from every worker. Never fabricate worker output,
-test results, scan results, URLs, commits, or successful external actions.
+test results, scan results, URLs, commits, or successful external actions. Report on every outcome:
+a capped run, an abandoned run, and a run whose workers failed all get the same report, saying what
+did and did not happen.
 
 Read [references/output-contracts.md](references/output-contracts.md) for the required report contents.
 

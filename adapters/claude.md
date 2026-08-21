@@ -12,11 +12,23 @@ Use this package as the provider-neutral `graph-engineering-workflow` skill for 
 
 Trigger for coding work that benefits from independent implementation, research, verification, auditing, merging, or targeted repair loops.
 
-If the Claude environment supports a skill directory, expose this package's `SKILL.md` as the primary instruction file. If the environment uses project instructions instead, copy or reference the core workflow from `SKILL.md`.
+If the Claude environment supports a skill directory, expose this package's `SKILL.md` as the primary instruction file. If the environment uses project instructions instead, copy or reference the core workflow from `SKILL.md`. Install the whole directory either way — `SKILL.md` loads `../references/` on demand.
+
+## Execution
+
+- **Workers:** use native subagents, teams, or isolated worktrees when available.
+- **Isolation:** give concurrent writers separate worktrees or branches.
+- **Grader:** a subagent or worktree-scoped session holding the rubric, artifacts, diff, and run
+  record — never the build transcript. Where no separate context is available, record
+  `acceptance.grader: self_graded`.
+- **Clarification:** present a short numbered choice list and accept a typed answer.
+
+Collect structured reports before merging, and keep verifier context separate from executor context.
 
 ## Portability Rules
 
-- Do not assume Codex-only tools or metadata.
-- Select the smallest valid graph for the available environment and state when a capability is unavailable.
-- Keep concurrent writers isolated and verifiers independent from executors.
-- Do not invent worker output, verification, parallelism, or external actions.
+See [README.md](README.md) for the rules every adapter inherits.
+
+## Not yet verified
+
+No eval case has been run on this host. These are loading and mapping notes, not observed behavior.

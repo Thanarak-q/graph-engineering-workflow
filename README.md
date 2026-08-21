@@ -5,8 +5,8 @@
 **Turn complex coding tasks into bounded, evidence-backed agent graphs — and close them on a graded rubric, not a feeling.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v2-brightgreen?style=flat-square)](#whats-new-in-v2)
-[![Agents](https://img.shields.io/badge/Agents-Antigravity%20%7C%20Codex%20%7C%20Claude%20Code%20%7C%20Hermes-8A2BE2?style=flat-square)](SKILL.md)
+[![Version](https://img.shields.io/badge/Version-v2.5-brightgreen?style=flat-square)](#whats-new-in-v2)
+[![Agents](https://img.shields.io/badge/Agents-Provider--Neutral-8A2BE2?style=flat-square)](adapters/README.md)
 [![Skill Type](https://img.shields.io/badge/Type-Portable%20Agent%20Skill-success?style=flat-square)](SKILL.md)
 [![Workflow](https://img.shields.io/badge/Orchestration-Evidence--Backed-orange?style=flat-square)](#architecture--workflow)
 
@@ -26,7 +26,15 @@
 
 ## Overview
 
-Graph Engineering Workflow is a portable Agent Skill for Antigravity (AGY), Codex, Claude Code, Hermes Agent, and modern agentic coding environments.
+Graph Engineering Workflow is a portable Agent Skill. Nothing in it is host-specific: the graph
+contract is the same everywhere, and `adapters/` carries per-host loading and dispatch notes for
+Antigravity (AGY), Codex, Claude Code, and Hermes Agent.
+
+> [!NOTE]
+> **No eval case has been run against any host yet.** The adapters describe how the workflow maps
+> onto each environment, not behavior that has been observed. A portability matrix appears here
+> when traces exist and not before — a skill that grades others on evidence does not get to claim
+> support it has not demonstrated.
 
 Rather than relying on unconstrained swarms or rigid linear checklists, this workflow:
 
@@ -47,13 +55,25 @@ v1 could run a graph correctly and still ship the wrong thing. v2 adds the missi
 - **Acceptance rubric.** Ten fixed process criteria (C1–C10), each binary and each requiring an evidence pointer — a `file:line`, a command and its output, or an artifact id.
 - **Outcome criteria (C11+).** One additional criterion per confirmed acceptance criterion, graded against a real anchor. A task with three acceptance criteria is scored out of **13**, so the number describes the work rather than the process.
 - **Fresh grader loop.** Failures return as a defect list with severities, route narrowly to their owners, and the **whole** rubric is re-graded so a fix cannot silently break a criterion that already passed.
-- **Two grading modes.** `hybrid` grades and repairs; `score-only` measures and stops.
-- **Honest degradation.** Where a host cannot provide an independent context, the score is recorded as `self_graded` — and a self-graded score never closes the gate on its own.
+- **One grading loop.** The grader scores, failures route to their owners, the rubric is re-graded, and the loop ends on a full applicable score or the round cap. A read-only score is a request, not a mode that switches the loop off.
+- **Honest degradation.** Where a host cannot provide an independent context, the score is recorded as `self_graded` — and a self-graded score never opens the gate on its own.
 - **Skill routing reaches the workers.** Selected skills are now part of the work-unit contract and are graded by C2, instead of living only in the plan.
 - **Portable budgets.** `budget` is now `{kind, value}` over `worker_turns | tool_calls | tokens | cost | none` and must name a unit the host can actually observe — a cap in a unit the runtime cannot see is not a cap.
 - **Provider-neutral activation.** The frontmatter description no longer names specific hosts, and carries the negative boundary (prefer a single loop for small tasks) in the metadata itself.
 - **Progressive disclosure.** Templates and reference material moved to `references/`, loaded on demand, bringing the always-loaded core back under the skill-size guidance.
-- **Behavior evals.** Twenty-one cases in `evals/` covering topology, isolation, verification, acceptance, limits, routing, and gates.
+- **Behavior evals.** Thirty-one cases in `evals/` covering topology, isolation, verification, acceptance, limits, routing, gates, and worker failure.
+
+### v2.5 — closing the gaps found in review
+
+- **Every graph carries at least one outcome criterion**, derived from the request when the user confirmed none. A score built from C1–C10 alone was reachable, and it read as an acceptance.
+- **An outcome criterion is never `not_applicable`.** Marking one NA dropped a user requirement out of the denominator and raised the score without building anything — a rubric edit wearing a verdict's clothes.
+- **Evidence classes.** Each criterion declares whether the grader can settle it from artifacts, by re-running an anchor, or only by reading the run record. Record-class criteria are attested, not checked, so the log is appended *during* the run and no arrangement of them opens the gate while an outcome criterion fails.
+- **The grader returns verdicts, not a gate.** A fresh context cannot know the round number or the round budget, so `score` and `gate` are computed by the loop controller.
+- **`gate: measured`** for a read-only round, so a score nobody asked to gate stops reporting as `blocked`.
+- **The state contract holds what the rubric grades.** Seven of ten process criteria demanded evidence the schema had no field for: write boundaries, stop conditions, rejected edges, typed conflicts and repairs, observed counts against every cap, approvals beyond commit/push/deploy, and an `unverified_review` result.
+- **Worker failure is specified.** A worker that fails, times out, or breaks its output contract has not done its unit, and its artifact is never reported as produced.
+- **Nested workers count against `max_workers`**, and `max_depth` caps subgraph nesting.
+- **An expectation lexicon** for the evals, enforced by `scripts/check.sh`. The suite had 91 tokens across 22 cases, 87 of them used exactly once.
 
 Full detail in the [CHANGELOG](CHANGELOG.md).
 
@@ -77,12 +97,17 @@ Full detail in the [CHANGELOG](CHANGELOG.md).
 flowchart TD
     U[User Request] --> SD[Skill Discovery: read-only]
     SD --> C[Clarify Ambiguities]
-    C --> CI[Codebase Investigator: read-only]
+    C --> AC[Confirm Acceptance Criteria]
+    AC --> CI[Codebase Investigator: read-only]
     CI --> G[Graph Architect & Fake-Edge Test]
+    G --> RB[Freeze Rubric: C1-C10 + one outcome criterion per AC]
+    RB --> P[Graph Plan]
+    P --> HA{Approved?}
+    HA -->|no| C
 
-    G -->|external evidence needed| R1[API & Docs Research]
-    G -->|external evidence needed| R2[Dependency Research]
-    G -->|external evidence needed| R3[Security Research]
+    HA -->|external evidence needed| R1[API & Docs Research]
+    HA -->|external evidence needed| R2[Dependency Research]
+    HA -->|external evidence needed| R3[Security Research]
 
     R1 --> V1[Fresh Verifier]
     R2 --> V2[Fresh Verifier]
@@ -91,12 +116,12 @@ flowchart TD
     V1 --> K[Verified Context]
     V2 --> K
     V3 --> K
-    G -->|repository context is sufficient| K
+    HA -->|repository context is sufficient| K
 
     K --> D{Independent Units?}
-    D -->|yes| I1[Implementation Worker A]
-    D -->|yes| I2[Implementation Worker B]
-    D -->|yes| I3[Implementation Worker C]
+    D -->|yes| I1[Worker A: isolated boundary]
+    D -->|yes| I2[Worker B: isolated boundary]
+    D -->|yes| I3[Worker C: isolated boundary]
     D -->|no| S[Single Implementation Loop]
 
     I1 --> T1[Local Anchor]
@@ -104,7 +129,7 @@ flowchart TD
     I3 --> T3[Local Anchor]
     S --> TS[Local Anchor]
 
-    T1 --> M[Isolated Merge & Integration]
+    T1 --> M[Merge Owner: integration]
     T2 --> M
     T3 --> M
     TS --> M
@@ -121,14 +146,26 @@ flowchart TD
     A4 --> AM
 
     AM -->|failure| RR[Repair Router]
+    AM -->|audits disagree| CJ[Conflict Judge or Human Decision]
+    CJ --> RR
     RR --> O[Affected Owner Only]
     O --> RT[Repair & Rerun Anchors]
     RT --> M
 
     AM -->|pass| F
-    F --> GG[Acceptance Gate: Fresh Grader + Rubric]
-    GG -->|criteria failing| RR
-    GG -->|full score| H[Report & Human Gate]
+    F --> GG[Acceptance Gate: Frozen Rubric]
+    GG -->|independent context available| FG[Fresh Grader: verdicts only]
+    GG -->|no independent context| SG[Self-Graded: labeled, never opens the gate]
+    FG --> LC[Loop Controller: computes score and gate]
+    SG --> LC
+    LC -->|full applicable score| REP[Consolidated Report]
+    LC -->|criteria failing| RC{Rounds remaining under max_grader_rounds?}
+    RC -->|yes| RR
+    RC -->|no| CAP[Capped: score, open defects, work remaining]
+    CAP --> REP
+    REP --> H{Irreversible action requested?}
+    H -->|yes| HG[Human Gate: approve this exact action]
+    H -->|no| DONE([Done])
 ```
 
 > [!NOTE]
@@ -138,68 +175,108 @@ flowchart TD
 
 ## The Acceptance Rubric
 
-The graph closes when a fresh grader returns a full score. The score is not an impression — it is the count of criteria that passed out of the criteria that apply.
+The graph is accepted when a fresh grader returns a full score — `passed == applicable`. The score is not an impression: it is the count of criteria that passed out of the criteria that apply.
+
+Criteria are not equally checkable, so each declares an **evidence class**. `artifact` and `rerun` criteria the grader settles for itself. `record` criteria it can only read from the run log, which means they are attested by the builder rather than checked — the seam this rubric is honest about rather than hiding. Two rules keep it load-bearing: the log is appended *during* the run, not composed after it, and no arrangement of record-class passes opens the gate while an outcome criterion is failing.
 
 ### Process criteria — fixed
 
-| # | Criterion | Passes only when |
-| :--- | :--- | :--- |
-| **C1** | Topology is real | Independent units and real edges are documented, and every removed fake edge is named. |
-| **C2** | Workers are bounded | Each worker has a stated input, output, owner, write boundary, and stop condition, and was handed the skills its node was assigned. |
-| **C3** | Writers are isolated | Every concurrent writer had a separate worktree, branch, container, or equivalent. |
-| **C4** | Research is traceable | Each claim carries source, evidence span, freshness, and confidence, and passed fresh verification. |
-| **C5** | Audits are anchored | Each audit used a real anchor, or is explicitly labeled an unverified review. |
-| **C6** | Anchors actually ran | Tests, builds, scans, and type checks were executed, their output inspected, and the final artifact read back or run. |
-| **C7** | Conflicts and repairs are routed | Every conflict and repair has an owner, a decision or unresolved marker, and the rechecks that followed. |
-| **C8** | Limits held | Worker, concurrency, wave, retry, time, budget, and grader-round caps were set explicitly and respected. |
-| **C9** | Human gates held | Nothing irreversible happened without an explicit approval for that exact action. |
-| **C10** | The report is honest | Facts, assumptions, decisions, and unresolved risks are separated, and nothing is claimed that did not run. |
+| # | Criterion | Class | Passes only when |
+| :--- | :--- | :--- | :--- |
+| **C1** | Topology is real | `record` | Independent units and real edges are documented, and every edge removed by the fake-edge test is named in `rejected_edges` with its reason. |
+| **C2** | Workers are bounded | `record` | Each worker has a stated input, output, owner, write boundary, verifier, and stop condition, and was handed the skills its node was assigned in the graph plan. |
+| **C3** | Writers are isolated | `artifact` | Every concurrent writer had a separate worktree, branch, container, or equivalent, evidenced from host state where the host records it and from the run log where it does not. |
+| **C4** | Research is traceable | `artifact` | Each claim carries source, evidence span, freshness, and confidence, the cited source resolves, and the claim passed fresh verification. |
+| **C5** | Audits are anchored | `artifact` | Each audit used a real anchor whose output is retrievable, or is recorded with `result: unverified_review` and labeled as such in the report. |
+| **C6** | Anchors actually ran | `rerun` | Tests, builds, scans, and type checks were executed, their output inspected, and the final artifact read back or run. Stored output that the grader cannot reproduce or retrieve does not satisfy this. |
+| **C7** | Conflicts and repairs are routed | `record` | Every conflict and repair has an owner, a decision or unresolved marker, and the rechecks that followed. |
+| **C8** | Limits held | `record` | Worker, concurrency, wave, retry, depth, and grader-round caps were set to explicit values, the observed count for each was recorded, every observed count is within its cap, and the budget either names an observable unit that held or is recorded as unenforceable with a reason. |
+| **C9** | Human gates held | `artifact` | No commit, push, deploy, publish, delete, payment, or external send happened without an explicit approval for that exact action, checked against host state where the host records it. |
+| **C10** | The report is honest | `artifact` | Facts, assumptions, decisions, and unresolved risks are separated, every anchor claimed in the report resolves to recorded output, and nothing is claimed that did not run. |
 
 ### Outcome criteria — one per acceptance criterion
 
 `C11`, `C12`, `C13`… are derived from the acceptance criteria confirmed with you at the start — never from what the workers happened to build. Each passes only against a real anchor: a test, a run, an API call, an inspected output.
 
+**Every graph carries at least one.** If you decline to state acceptance criteria, one is derived from your request, shown in the graph plan, and graded — declining to name them is not a waiver of the outcome half of the rubric.
+
+**None of them is ever `not_applicable`.** A process criterion the task does not exercise leaves the denominator; an outcome criterion cannot, because it is your requirement. Dropping it out of the denominator raises the score without building anything, which is a rubric edit wearing a verdict's clothes. A requirement that genuinely stopped applying is a scope change, and you decide it.
+
 > [!IMPORTANT]
 > Passing all ten process criteria is **not** a passing graph on its own. It is a well-run graph whose outcome is still ungraded — a full score means every applicable criterion, process and outcome alike.
 
-### Grading modes
+### The repair loop
 
-| Mode | Grader | Repair | Writes | Ends when |
-| :--- | :--- | :--- | :---: | :--- |
-| **`hybrid`** *(default)* | Scores the rubric and returns a defect list | Routes every failure to its owner, then re-grades | Yes | Full score, or the grader-round cap is reached |
-| **`score-only`** | Scores the rubric and returns a defect list | None | No | You say so, or there is nothing new to grade |
+| Stage | What happens |
+| :--- | :--- |
+| **Grade** | A fresh grader that never saw the build scores every criterion against an evidence pointer |
+| **Route** | Each failure goes to the worker that owns the artifact, through the repair router |
+| **Re-grade** | The *whole* rubric is scored again, so a fix cannot silently break a passing criterion |
+| **Stop** | Full applicable score, or `max_grader_rounds` — which reports as **capped**, not complete |
 
-Ask for `score-only` when you want an untouched measurement — a grader that repairs what it measures is no longer an independent measurement.
+The grader returns verdicts; the loop controller turns them into a gate, because a fresh context
+does not know the round number or how many rounds remain:
+
+| Gate | Meaning |
+| :--- | :--- |
+| `passed` | Every applicable criterion passed. |
+| `blocked` | Criteria are failing and rounds remain. |
+| `capped` | Criteria are failing and the round budget is spent. Capped is not complete. |
+| `measured` | A read-only round. No gate decision was taken, because none was asked for. |
+
+The loop is not optional, and the grader never repairs anything itself. Independence comes from
+context isolation and ownership routing, so there is no mode that grades without repairing.
+
+Ask for a read-only score — *"grade this, don't change anything"* — and you get exactly one round,
+the defect list, and the decision handed back to you, at `gate: measured`. That round must also name
+any criterion that **cannot reach `pass` without a repair**, so a score capped by your own request
+is never reported as if the work fell short.
+
+"Don't change anything" covers your tracked source, artifacts, and history — not the filesystem.
+Anchors still run: a test that writes a coverage file is not a change to the work, and a score with
+no anchors behind it is the unverified opinion this rubric refuses everywhere else.
 
 <details>
 <summary><b>What a grader round returns</b></summary>
 
 <br>
 
+The grader returns verdicts and the criteria it can see are unreachable — no `score`, no `gate`:
+
 ```yaml
-mode: hybrid
-round: 2
-score: "11/13"
-gate: closed
 criteria:
   - id: C6
     verdict: pass
+    class: rerun
     severity: none
     evidence: "pnpm test -- auth/: 48 passed, 0 failed"
   - id: C4
     verdict: not_applicable
+    class: artifact
     severity: none
     evidence: "no external research node ran"
   - id: C11
     verdict: fail
+    class: rerun
     severity: blocker
     evidence: "POST /login with a valid password returns 500; src/auth/session.ts:74"
     defect: "session write happens before the transaction commits"
   - id: C9
     verdict: fail
+    class: artifact
     severity: major
     evidence: "git log shows commit 4a1c2f9 with approvals.commit still pending"
     defect: "committed without the human gate"
+unreachable: []
+```
+
+The loop controller computes the rest from those verdicts and `max_grader_rounds`:
+
+```yaml
+acceptance:
+  round: 2
+  score: "11/13"
+  gate: blocked
 ```
 
 </details>
@@ -211,9 +288,14 @@ criteria:
 | Path | What it is |
 | :--- | :--- |
 | `SKILL.md` | The skill. Loaded in full whenever the skill activates, so it stays lean. |
-| `references/` | Templates and detail the skill loads on demand — state contract, output contracts, host guidance, grader and research output shapes, routing map, pitfalls. |
-| `evals/` | Behavior cases: one prompt each, plus what must and must not happen. |
-| `adapters/`, `agents/` | Host-specific loading notes and interface metadata. |
+| `references/rubric.md` | The acceptance criteria, their evidence classes, and the outcome-criterion rules. |
+| `references/state-contract.md` | The run record. Every field the rubric grades has a slot in it. |
+| `references/` | The rest of the detail the skill loads on demand — output contracts, host guidance, grader and research output shapes, audit dimensions, routing map, pitfalls. |
+| `evals/cases/` | Behavior cases: one prompt each, plus what must and must not happen. |
+| `evals/lexicon.md` | The expectation vocabulary. Every token a case uses is defined here. |
+| `scripts/check.sh` | Link, eval-case, lexicon, size, and whitespace checks. CI runs it. |
+| `adapters/` | Per-host loading and dispatch notes, with their verification status. |
+| `agents/` | Interface metadata. |
 | `CHANGELOG.md` | What changed in each version, and the gaps still open. |
 
 ---
@@ -278,11 +360,14 @@ Implement email/password auth across the API and web UI.
 Audit every route in src/api for missing authorization.
 ```
 
-To control the grading mode explicitly:
+To take a read-only score without running the repair loop:
 
 ```text
-Use graph-engineering-workflow in score-only mode to grade the current branch.
+Use graph-engineering-workflow to grade the current branch. Do not change anything.
 ```
+
+You get one round at `gate: measured`, the defect list, any criterion that cannot pass without a
+repair, and the decision back in your hands.
 
 ---
 
@@ -308,7 +393,7 @@ Click on any section below to expand the detailed specification:
 8. **Single-owner merge:** A designated merge owner reconciles branches and documents conflict resolutions.
 9. **Narrow repair routing:** Send failed findings directly to the responsible component owner, rerunning only affected checks and regressions.
 10. **Cap execution:** Set explicit limits on worker count, concurrency, waves, retries, grader rounds, runtime, and budget.
-11. **Grade the rubric:** A fresh grader that never saw the build scores every criterion against an evidence pointer. Failures return as a severity-ranked defect list, route to their owners, and the whole rubric is re-graded. The graph closes on a full score — or reports itself capped, which is not the same as complete.
+11. **Grade the rubric:** A fresh grader that never saw the build returns a verdict and an evidence pointer per criterion — not a gate, which it has no way to compute. Failures route to their owners as a severity-ranked defect list, and the whole rubric is re-graded. The graph is accepted on a full applicable score — or reports itself capped, which is not the same as complete.
 12. **Enforce human gates:** Require explicit human approval before irreversible actions (commit, push, deploy, publish, deletion, payments).
 
 </details>
@@ -328,7 +413,7 @@ Click on any section below to expand the detailed specification:
 | **4. Merge & Integration** | Single merge owner | Merges feature branches into the integration branch and executes the full build suite. |
 | **5. Audit Fan-out** | Targeted checks | Runs concurrent security (SQLi/XSS), privacy (token logging), and regression audits on the integrated build. |
 | **6. Targeted Repair** | Narrow route | Privacy audit detects token exposure in debug logs → routes the fix solely to the backend owner → reruns privacy + regression checks. |
-| **7. Acceptance Gate** | Fresh grader | Round 1 scores 11/13: C11 fails because login returns 500 on a valid password. The defect routes to the backend owner; round 2 re-grades all thirteen and returns 13/13. |
+| **7. Acceptance Gate** | Fresh grader | Round 1 returns verdicts the controller scores at 11/13, `gate: blocked`: C11 fails because login returns 500 on a valid password. The defect routes to the backend owner; round 2 re-grades all thirteen and returns 13/13, `gate: passed`. |
 | **8. Human Gate** | Final report | Outputs the consolidated summary and the rubric score, then prompts for explicit approval before commit. |
 
 </details>
@@ -342,12 +427,12 @@ For non-trivial tasks, the workflow produces structured, inspectable outputs:
 
 - **Graph Plan:** Verified task units, real dependencies, and ownership boundaries.
 - **Skill Plan:** Selected skills per node and explicit reasons for skipped skills.
-- **Execution Limits:** Strict caps on workers, concurrency, retries, grader rounds, runtime, and budget.
+- **Execution Limits:** Strict caps on workers, concurrency, waves, retries, nesting depth, grader rounds, runtime, and budget — each with the observed count recorded against it, because a cap nobody measured cannot be said to have held.
 - **Verified Findings:** Factual claims backed by source citations, code locations, or scan output.
-- **Change Summary:** Exact files modified and test/build commands executed.
+- **Change Summary:** Exact files modified and test/build commands executed, plus any worker that failed or returned unusable output and what happened to its unit.
 - **Audit Reports:** Targeted results across security, privacy, performance, and regression dimensions.
 - **Repair Records:** Narrow routing history and any remaining trade-offs.
-- **Rubric Scorecard:** The grading mode, the score, the round it was reached in, and every criterion still failing or marked not applicable.
+- **Rubric Scorecard:** The score, the gate, the round it was reached in, whether the repair loop ran, which criteria were `record`-class rather than independently checked, and every criterion still failing, unreachable, or marked not applicable.
 - **Human Gate Request:** Confirmation prompt prior to commits, pushes, deployments, or destructive actions.
 
 </details>

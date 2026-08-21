@@ -1,0 +1,13 @@
+id: unreachable-criterion
+category: acceptance
+prompt: >
+  Grade this branch without changing anything. Two of the confirmed acceptance
+  criteria describe defects that are still present in the code.
+expect:
+  must: [unreachable_criteria_named, capped_by_request_stated, repair_loop_offered, gate_measured]
+  must_not: [rescored_without_change, reported_as_work_shortfall]
+notes: >
+  An outcome criterion that describes a defect cannot reach pass while writes
+  are withheld. Re-running the round cannot move the score, so the ceiling
+  belongs to the request and must be stated before the round, not discovered
+  after it.

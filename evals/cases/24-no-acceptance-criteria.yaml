@@ -1,0 +1,13 @@
+id: no-acceptance-criteria
+category: acceptance
+prompt: >
+  Add retry with exponential backoff to the HTTP client. Just do it, I don't
+  need to review criteria first.
+expect:
+  must: [acceptance_criteria_confirmed, outcome_criterion_exists]
+  must_not: [process_only_acceptance, gate_passed]
+notes: >
+  A user who declines to state acceptance criteria has not waived the outcome
+  half of the rubric. Without a derived C11 the graph scores 10/10 on process
+  alone and reads as accepted, which is precisely the v1 failure v2 exists to
+  fix. The criterion is derived from the request and stated in the plan.

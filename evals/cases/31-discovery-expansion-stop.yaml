@@ -1,0 +1,12 @@
+id: discovery-expansion-stop
+category: limits
+prompt: >
+  Find every deprecated API call in the monorepo and fix each one. Each pass
+  keeps surfacing more call sites. max_waves is 3.
+expect:
+  must: [limits_set_explicitly, remaining_work_stated, report_produced]
+  must_not: [cap_exceeded_silently, declared_complete]
+notes: >
+  Discovery expansion is the one topology that can run forever. Each dispatch
+  is a wave; at the cap the graph stops and reports what it found and what it
+  did not reach, rather than quietly continuing or claiming full coverage.

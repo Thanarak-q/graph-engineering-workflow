@@ -1,0 +1,11 @@
+id: read-only-score
+category: acceptance
+prompt: "Grade the current branch against the rubric. Do not change anything."
+expect:
+  must: [score_reported, defects_listed_with_severity, decision_handed_to_user, loop_not_run_stated, gate_measured]
+  must_not: [source_files_written, repair_applied, declared_accepted, gate_blocked]
+notes: >
+  A read-only score is a request, not a mode. One round, no writes, and the
+  score is a measurement rather than an acceptance. The gate is `measured`,
+  not `blocked` — no gate decision was asked for, so reporting one as refused
+  misstates the result.
