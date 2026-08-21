@@ -21,13 +21,14 @@ No build system is configured, and there is no runner that executes the behavior
 checkable is internal consistency, and `scripts/check.sh` checks it:
 
 ```bash
-./scripts/check.sh               # Links, eval-case shape, lexicon coverage, size, whitespace
+./scripts/check.sh               # Links, case shape, lexicon, README/rubric sync, size, whitespace
 ```
 
 It verifies that every relative markdown link resolves, that every eval case parses and its id
-matches its filename, that every expectation token is defined in `evals/lexicon.md`, that
-`SKILL.md` stays near the always-loaded size guidance, and that `git diff --check` is clean. CI
-runs the same script. Review the normative documents by hand as well:
+matches its filename, that every expectation token is defined in `evals/lexicon.md`, that the
+rubric table in `README.md` still matches `references/rubric.md` row for row, that `SKILL.md`
+stays near the always-loaded size guidance, and that `git diff --check` is clean. CI runs the
+same script. Review the normative documents by hand as well:
 
 ```bash
 cat SKILL.md                     # The normative document, loaded in full on activation
@@ -42,7 +43,7 @@ Write Markdown with ATX headings, short paragraphs, and fenced code blocks tagge
 
 ## Testing Guidelines
 
-Testing has two layers. **Mechanical:** `./scripts/check.sh` must pass. **Documentation review:** check that examples match the described workflow, that the rubric in `README.md` still matches `references/rubric.md`, and that headings are ordered logically.
+Testing has two layers. **Mechanical:** `./scripts/check.sh` must pass. **Documentation review:** check that examples match the described workflow, that a rule moved into `references/` is not also restated in `SKILL.md` where the two can drift apart, and that headings are ordered logically. The rubric tables are compared mechanically, so they are not part of this pass.
 
 Behavior evals: `evals/cases/*.yaml` define what an agent carrying the skill must and must not do. They are run by hand today — there is no runner — and no case has been executed against a host yet. Do not describe any behavior as tested until a trace exists.
 
@@ -54,4 +55,4 @@ Use concise, imperative commit subjects with a conventional scope when useful; e
 
 ## Security & Configuration Tips
 
-Do not commit credentials, personal paths, generated installation state, agent session checkpoints, or populated secret files. `.gitignore` covers `.claude/`. Keep installation examples portable by using environment variables such as `$HOME` and `${HERMES_HOME:-$HOME/.hermes}` as shown in `README.md`.
+Do not commit credentials, personal paths, generated installation state, agent session checkpoints, or populated secret files. `.gitignore` covers `.claude/`. Keep installation examples portable: `README.md` copies into a `<your-agent-skills-dir>` placeholder and defers the real per-agent paths to the `skills` CLI documentation, rather than hard-coding a home directory that rots.

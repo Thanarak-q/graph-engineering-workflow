@@ -61,7 +61,7 @@ v1 could run a graph correctly and still ship the wrong thing. v2 adds the missi
 - **Portable budgets.** `budget` is now `{kind, value}` over `worker_turns | tool_calls | tokens | cost | none` and must name a unit the host can actually observe — a cap in a unit the runtime cannot see is not a cap.
 - **Provider-neutral activation.** The frontmatter description no longer names specific hosts, and carries the negative boundary (prefer a single loop for small tasks) in the metadata itself.
 - **Progressive disclosure.** Templates and reference material moved to `references/`, loaded on demand, bringing the always-loaded core back under the skill-size guidance.
-- **Behavior evals.** Thirty-one cases in `evals/` covering topology, isolation, verification, acceptance, limits, routing, gates, and worker failure.
+- **Behavior evals.** Thirty-five cases in `evals/` covering topology, isolation, verification, acceptance, limits, routing, gates, worker failure, user interaction, and read-only discovery.
 
 ### v2.5 — closing the gaps found in review
 
@@ -288,12 +288,12 @@ acceptance:
 | Path | What it is |
 | :--- | :--- |
 | `SKILL.md` | The skill. Loaded in full whenever the skill activates, so it stays lean. |
-| `references/rubric.md` | The acceptance criteria, their evidence classes, and the outcome-criterion rules. |
+| `references/rubric.md` | The acceptance criteria, their evidence classes, the outcome-criterion rules, and the read-only round. |
 | `references/state-contract.md` | The run record. Every field the rubric grades has a slot in it. |
 | `references/` | The rest of the detail the skill loads on demand — output contracts, host guidance, grader and research output shapes, audit dimensions, routing map, pitfalls. |
 | `evals/cases/` | Behavior cases: one prompt each, plus what must and must not happen. |
 | `evals/lexicon.md` | The expectation vocabulary. Every token a case uses is defined here. |
-| `scripts/check.sh` | Link, eval-case, lexicon, size, and whitespace checks. CI runs it. |
+| `scripts/check.sh` | Link, eval-case, lexicon, README/rubric sync, size, and whitespace checks. CI runs it. |
 | `adapters/` | Per-host loading and dispatch notes, with their verification status. |
 | `agents/` | Interface metadata. |
 | `CHANGELOG.md` | What changed in each version, and the gaps still open. |

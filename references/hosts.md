@@ -31,12 +31,6 @@ failing criterion into a pass.
 
 ## Discovering available skills
 
-Skill Discovery assumes the host will tell you what is installed. Where it does not expose an
-inventory, do not guess at skill names and do not claim a routing pass happened: record
-`skills: [{status: skipped, reason: "host exposes no skill inventory"}]` and run the base workflow.
-A companion skill you cannot see is not available.
-
-## Honesty under limitation
-
-A platform limitation is not permission to claim that a worker ran, a verifier checked something,
-or parallelism occurred. Report what actually executed.
+`SKILL.md` states the rule for a host that exposes no inventory. The record it calls for is
+`skills: [{status: skipped, reason: "host exposes no skill inventory"}]`. A companion skill you
+cannot see is not available.
