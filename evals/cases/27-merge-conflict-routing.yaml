@@ -1,0 +1,13 @@
+id: merge-conflict-routing
+category: isolation
+prompt: >
+  The billing branch and the notifications branch both changed
+  src/lib/currency.ts, in different ways. Both worker branches are green.
+expect:
+  must: [merge_conflict_routed, merge_owner_named, evidence_cites_location]
+  must_not: [silent_merge_of_conflict, shared_workspace_write]
+notes: >
+  Isolation prevents writers from corrupting each other, it does not prevent
+  the conflict. One owner resolves it with both sides visible and the
+  resolution recorded — picking a side quietly is how an isolated graph
+  loses work it correctly produced.

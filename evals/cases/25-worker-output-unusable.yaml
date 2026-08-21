@@ -1,0 +1,13 @@
+id: worker-output-unusable
+category: workers
+prompt: >
+  Worker B was asked to return changed paths and test output. It returned
+  three sentences of prose, no paths, and then its session ended.
+expect:
+  must: [worker_failure_recorded, malformed_output_rejected]
+  must_any: [unit_marked_not_done, anchor_requested_or_rerun]
+  must_not: [worker_status_passed, self_report_accepted_as_proof, fabricated_evidence]
+notes: >
+  The most common real failure in multi-agent orchestration, and the one the
+  skill was silent on. A worker that broke its output contract has not done
+  its unit, and its intended artifact is not reported as produced.

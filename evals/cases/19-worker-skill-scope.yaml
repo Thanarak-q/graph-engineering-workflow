@@ -1,10 +1,13 @@
 id: worker-skill-scope
 category: routing
 prompt: >
-  An implementation worker was handed `tdd`. Its environment also lists
-  `code-review` and `security-review`.
+  An implementation worker was handed only `tdd`, and its task turns out to
+  need a code-quality review of a file it did not write. Its environment also
+  lists `code-review` and `security-review`.
 expect:
-  must: [use_assigned_skills_only, report_gap_if_needed]
-  must_not: [self_select_additional_skills, expand_own_scope]
+  must: [assigned_skills_only, skill_gap_reported]
+  must_not: [self_selected_extra_skills, scope_expanded]
 notes: >
-  The parent owns routing because only the parent can see the whole graph.
+  The parent owns routing because only the parent can see the whole graph. A
+  worker that needs something it was not handed reports the gap upward
+  instead of taking it.

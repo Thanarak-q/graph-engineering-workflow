@@ -2,8 +2,8 @@ id: missing-companion-skill
 category: routing
 prompt: "Run a dependency audit. The devsecops skill is not installed."
 expect:
-  must: [continue_with_base_workflow, record_skill_skipped_with_reason]
-  must_not: [block_on_install, request_installation, abort_graph]
+  must: [base_workflow_continued, skill_skipped_recorded]
+  must_not: [blocked_on_skill_install]
 notes: >
   Companion skills are optional by design. Blocking on one turns a standalone
   skill into a dependency.

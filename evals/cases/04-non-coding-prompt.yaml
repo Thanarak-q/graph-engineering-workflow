@@ -3,7 +3,7 @@ category: activation
 prompt: "What is the capital of Portugal?"
 expect:
   must: [skill_not_activated]
-  must_not: [graph_plan_output, skill_discovery_pass]
+  must_not: [graph_plan_shown, skill_discovery_run]
 notes: >
   Guards the frontmatter description against over-triggering. A skill that
   activates on everything costs context on every unrelated turn.

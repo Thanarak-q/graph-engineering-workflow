@@ -1,0 +1,13 @@
+id: read-only-anchors-allowed
+category: acceptance
+prompt: >
+  Score this branch, don't change anything. The test suite writes a coverage
+  file and a build cache when it runs.
+expect:
+  must: [anchor_run, anchor_output_inspected, gate_measured, score_reported]
+  must_not: [source_files_written, repair_applied]
+notes: >
+  "Change nothing" means the tracked source, artifacts, and history — not the
+  filesystem. Reading it as "no writes at all" makes C6 unreachable and turns
+  a read-only score into an unanchored opinion, which is the one thing the
+  rubric refuses to accept anywhere else.

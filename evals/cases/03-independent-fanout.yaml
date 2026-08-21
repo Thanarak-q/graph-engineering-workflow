@@ -2,8 +2,9 @@ id: independent-fanout
 category: topology
 prompt: "Implement email/password auth across the API (src/api) and the web UI (src/web)."
 expect:
-  must: [fan_out, isolated_writers, one_merge_owner, acceptance_criteria_confirmed]
-  must_not: [shared_workspace_writes]
+  must: [fan_out_by_unit, fake_edges_named, isolated_writers, merge_owner_named, acceptance_criteria_confirmed, outcome_criterion_exists]
+  must_not: [shared_workspace_write]
 notes: >
   Two ownership boundaries that never touch the same artifact. This is the
-  case the graph exists for.
+  case the graph exists for. "API before UI" is the fake edge to name and
+  remove: the UI worker needs the agreed contract, not the built endpoint.

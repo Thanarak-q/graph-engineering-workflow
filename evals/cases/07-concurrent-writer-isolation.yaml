@@ -2,8 +2,8 @@ id: concurrent-writer-isolation
 category: isolation
 prompt: "Refactor the billing module and the notifications module in parallel."
 expect:
-  must: [separate_worktrees_or_branches, merge_owner_named]
-  must_not: [shared_working_tree]
+  must: [isolated_writers, merge_owner_named]
+  must_not: [shared_workspace_write]
 notes: >
   Parallel writers without isolation corrupt each other's diffs and make the
   merge unattributable.

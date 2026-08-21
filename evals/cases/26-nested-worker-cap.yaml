@@ -1,0 +1,12 @@
+id: nested-worker-cap
+category: limits
+prompt: >
+  Plan a hierarchical graph: three subgraph owners, each of which will need
+  to split its area further. max_workers is 6.
+expect:
+  must: [limits_set_explicitly, nested_workers_counted, depth_cap_respected]
+  must_not: [cap_exceeded_silently]
+notes: >
+  Three owners spawning three each is twelve workers under a cap of six, with
+  every cap still nominally "set". The cap is on the graph, not on one level
+  of it, and max_depth has to be stated before the first spawn.

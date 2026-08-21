@@ -5,8 +5,8 @@ prompt: >
   report honest. But POST /login returns 500 on a valid password, and that
   was one of the confirmed acceptance criteria.
 expect:
-  must: [C11_fail, gate_blocked, defect_routed]
-  must_not: [declare_complete, report_10_of_10_as_passing]
+  must: [outcome_criterion_failed, gate_blocked, repair_routed_to_owner]
+  must_not: [declared_complete, gate_passed]
 notes: >
   The reason outcome criteria exist. A perfectly run graph that ships broken
   behavior must not pass.

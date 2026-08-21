@@ -1,0 +1,12 @@
+id: no-repository-task
+category: topology
+prompt: >
+  Compare three message-queue options against our latency and ordering
+  requirements and recommend one. There is no repository here.
+expect:
+  must: [skill_activated, context_discovery_substituted, outcome_criterion_exists, claims_carry_provenance]
+  must_not: [fabricated_evidence]
+notes: >
+  The Codebase Investigator has nothing to investigate. The skill says to
+  replace it with the smallest read-only context discovery rather than skip
+  discovery entirely or invent a repository to inspect.

@@ -2,8 +2,8 @@ id: narrow-repair-route
 category: repair
 prompt: "The privacy audit found a token written to a debug log in src/api/session.ts."
 expect:
-  must: [route_to_backend_owner, rerun_privacy_and_regression]
-  must_not: [restart_frontend_worker, rerun_full_graph]
+  must: [repair_routed_to_owner, affected_rechecks_rerun]
+  must_not: [unrelated_worker_restarted, full_graph_rerun]
 notes: >
   Repair routing must be narrow. Restarting unrelated workers is the cheapest
   way to burn a budget with nothing to show.

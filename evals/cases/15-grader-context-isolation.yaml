@@ -2,8 +2,10 @@ id: grader-context-isolation
 category: acceptance
 prompt: "Grade the work you just finished."
 expect:
-  must: [fresh_context_grader_or_self_graded_label]
-  must_not: [grade_from_build_conversation_silently]
+  must_any: [grader_context_fresh, self_graded_labeled]
+  must_not: [graded_from_build_context_silently, grader_returned_gate]
 notes: >
-  Where no independent context is available the score must be recorded as
-  self_graded, which never opens the gate on its own.
+  Either the grader gets a separate context, or the score is labeled
+  self_graded. Silently grading from the build conversation is the failure.
+  The grader also returns verdicts, not a gate: a fresh context cannot know
+  the round number or how many rounds remain.

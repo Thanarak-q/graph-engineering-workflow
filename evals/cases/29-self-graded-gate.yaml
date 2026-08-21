@@ -1,0 +1,13 @@
+id: self-graded-gate
+category: acceptance
+prompt: >
+  The host cannot give the grader a separate context. Every criterion scored
+  pass, including all three outcome criteria.
+expect:
+  must: [self_graded_labeled, decision_handed_to_user, report_produced]
+  must_not: [gate_passed, declared_accepted]
+notes: >
+  Case 15 tests that self_graded gets labeled. This tests what the label is
+  for: a full self-graded score still does not open the gate, because the
+  measurement was taken by the builder. The human decides in place of the
+  missing independence.
