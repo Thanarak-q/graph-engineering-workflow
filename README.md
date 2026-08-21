@@ -47,13 +47,13 @@ v1 could run a graph correctly and still ship the wrong thing. v2 adds the missi
 - **Acceptance rubric.** Ten fixed process criteria (C1–C10), each binary and each requiring an evidence pointer — a `file:line`, a command and its output, or an artifact id.
 - **Outcome criteria (C11+).** One additional criterion per confirmed acceptance criterion, graded against a real anchor. A task with three acceptance criteria is scored out of **13**, so the number describes the work rather than the process.
 - **Fresh grader loop.** Failures return as a defect list with severities, route narrowly to their owners, and the **whole** rubric is re-graded so a fix cannot silently break a criterion that already passed.
-- **Two grading modes.** `hybrid` grades and repairs; `score-only` measures and stops.
-- **Honest degradation.** Where a host cannot provide an independent context, the score is recorded as `self_graded` — and a self-graded score never closes the gate on its own.
+- **One grading loop.** The grader scores, failures route to their owners, the rubric is re-graded, and the loop ends on a full applicable score or the round cap. A read-only score is a request, not a mode that switches the loop off.
+- **Honest degradation.** Where a host cannot provide an independent context, the score is recorded as `self_graded` — and a self-graded score never opens the gate on its own.
 - **Skill routing reaches the workers.** Selected skills are now part of the work-unit contract and are graded by C2, instead of living only in the plan.
 - **Portable budgets.** `budget` is now `{kind, value}` over `worker_turns | tool_calls | tokens | cost | none` and must name a unit the host can actually observe — a cap in a unit the runtime cannot see is not a cap.
 - **Provider-neutral activation.** The frontmatter description no longer names specific hosts, and carries the negative boundary (prefer a single loop for small tasks) in the metadata itself.
 - **Progressive disclosure.** Templates and reference material moved to `references/`, loaded on demand, bringing the always-loaded core back under the skill-size guidance.
-- **Behavior evals.** Twenty-one cases in `evals/` covering topology, isolation, verification, acceptance, limits, routing, and gates.
+- **Behavior evals.** Twenty-two cases in `evals/` covering topology, isolation, verification, acceptance, limits, routing, and gates.
 
 Full detail in the [CHANGELOG](CHANGELOG.md).
 
@@ -138,21 +138,21 @@ flowchart TD
 
 ## The Acceptance Rubric
 
-The graph closes when a fresh grader returns a full score. The score is not an impression — it is the count of criteria that passed out of the criteria that apply.
+The graph is accepted when a fresh grader returns a full score. The score is not an impression — it is the count of criteria that passed out of the criteria that apply.
 
 ### Process criteria — fixed
 
 | # | Criterion | Passes only when |
 | :--- | :--- | :--- |
 | **C1** | Topology is real | Independent units and real edges are documented, and every removed fake edge is named. |
-| **C2** | Workers are bounded | Each worker has a stated input, output, owner, write boundary, and stop condition, and was handed the skills its node was assigned. |
+| **C2** | Workers are bounded | Each worker has a stated input, output, owner, write boundary, and stop condition, and was handed the skills its node was assigned in the graph plan. |
 | **C3** | Writers are isolated | Every concurrent writer had a separate worktree, branch, container, or equivalent. |
 | **C4** | Research is traceable | Each claim carries source, evidence span, freshness, and confidence, and passed fresh verification. |
 | **C5** | Audits are anchored | Each audit used a real anchor, or is explicitly labeled an unverified review. |
 | **C6** | Anchors actually ran | Tests, builds, scans, and type checks were executed, their output inspected, and the final artifact read back or run. |
 | **C7** | Conflicts and repairs are routed | Every conflict and repair has an owner, a decision or unresolved marker, and the rechecks that followed. |
-| **C8** | Limits held | Worker, concurrency, wave, retry, time, budget, and grader-round caps were set explicitly and respected. |
-| **C9** | Human gates held | Nothing irreversible happened without an explicit approval for that exact action. |
+| **C8** | Limits held | Worker, concurrency, wave, retry, time, and grader-round caps were set to explicit values and respected, and the budget either names an observable unit that held or is recorded as unenforceable with a reason. |
+| **C9** | Human gates held | No commit, push, deploy, publish, delete, payment, or external send happened without an explicit approval for that exact action. |
 | **C10** | The report is honest | Facts, assumptions, decisions, and unresolved risks are separated, and nothing is claimed that did not run. |
 
 ### Outcome criteria — one per acceptance criterion
@@ -162,14 +162,22 @@ The graph closes when a fresh grader returns a full score. The score is not an i
 > [!IMPORTANT]
 > Passing all ten process criteria is **not** a passing graph on its own. It is a well-run graph whose outcome is still ungraded — a full score means every applicable criterion, process and outcome alike.
 
-### Grading modes
+### The repair loop
 
-| Mode | Grader | Repair | Writes | Ends when |
-| :--- | :--- | :--- | :---: | :--- |
-| **`hybrid`** *(default)* | Scores the rubric and returns a defect list | Routes every failure to its owner, then re-grades | Yes | Full score, or the grader-round cap is reached |
-| **`score-only`** | Scores the rubric and returns a defect list | None | No | You say so, or there is nothing new to grade |
+| Stage | What happens |
+| :--- | :--- |
+| **Grade** | A fresh grader that never saw the build scores every criterion against an evidence pointer |
+| **Route** | Each failure goes to the worker that owns the artifact, through the repair router |
+| **Re-grade** | The *whole* rubric is scored again, so a fix cannot silently break a passing criterion |
+| **Stop** | Full applicable score, or `max_grader_rounds` — which reports as **capped**, not complete |
 
-Ask for `score-only` when you want an untouched measurement — a grader that repairs what it measures is no longer an independent measurement.
+The loop is not optional, and the grader never repairs anything itself. Independence comes from
+context isolation and ownership routing, so there is no mode that grades without repairing.
+
+Ask for a read-only score — *"grade this, don't change anything"* — and you get exactly one round,
+the defect list, and the decision handed back to you. That round must also name any criterion that
+**cannot reach `pass` without a repair**, so a score capped by your own request is never reported as
+if the work fell short.
 
 <details>
 <summary><b>What a grader round returns</b></summary>
@@ -177,10 +185,9 @@ Ask for `score-only` when you want an untouched measurement — a grader that re
 <br>
 
 ```yaml
-mode: hybrid
 round: 2
 score: "11/13"
-gate: closed
+gate: blocked
 criteria:
   - id: C6
     verdict: pass
@@ -278,10 +285,10 @@ Implement email/password auth across the API and web UI.
 Audit every route in src/api for missing authorization.
 ```
 
-To control the grading mode explicitly:
+To take a read-only score without running the repair loop:
 
 ```text
-Use graph-engineering-workflow in score-only mode to grade the current branch.
+Use graph-engineering-workflow to grade the current branch. Do not change anything.
 ```
 
 ---
@@ -308,7 +315,7 @@ Click on any section below to expand the detailed specification:
 8. **Single-owner merge:** A designated merge owner reconciles branches and documents conflict resolutions.
 9. **Narrow repair routing:** Send failed findings directly to the responsible component owner, rerunning only affected checks and regressions.
 10. **Cap execution:** Set explicit limits on worker count, concurrency, waves, retries, grader rounds, runtime, and budget.
-11. **Grade the rubric:** A fresh grader that never saw the build scores every criterion against an evidence pointer. Failures return as a severity-ranked defect list, route to their owners, and the whole rubric is re-graded. The graph closes on a full score — or reports itself capped, which is not the same as complete.
+11. **Grade the rubric:** A fresh grader that never saw the build scores every criterion against an evidence pointer. Failures return as a severity-ranked defect list, route to their owners, and the whole rubric is re-graded. The graph is accepted on a full score — or reports itself capped, which is not the same as complete.
 12. **Enforce human gates:** Require explicit human approval before irreversible actions (commit, push, deploy, publish, deletion, payments).
 
 </details>
@@ -347,7 +354,7 @@ For non-trivial tasks, the workflow produces structured, inspectable outputs:
 - **Change Summary:** Exact files modified and test/build commands executed.
 - **Audit Reports:** Targeted results across security, privacy, performance, and regression dimensions.
 - **Repair Records:** Narrow routing history and any remaining trade-offs.
-- **Rubric Scorecard:** The grading mode, the score, the round it was reached in, and every criterion still failing or marked not applicable.
+- **Rubric Scorecard:** The score, the round it was reached in, whether the repair loop ran, and every criterion still failing or marked not applicable.
 - **Human Gate Request:** Confirmation prompt prior to commits, pushes, deployments, or destructive actions.
 
 </details>

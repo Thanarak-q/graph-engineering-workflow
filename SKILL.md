@@ -238,7 +238,7 @@ Read [references/output-contracts.md](references/output-contracts.md) for the pl
 
 ## Acceptance Rubric
 
-The graph closes only when a fresh grader passes **every applicable criterion** — `passed == applicable` — or when an explicit human decision substitutes for an independent gate where that is allowed. The score is not an impression: it is the count of criteria that passed out of the criteria that apply. Each criterion is binary and must be answered with an evidence pointer — a `file:line`, a command and its output, or an artifact id. A criterion that the task does not exercise is marked `not_applicable` with a one-line reason and is excluded from the denominator, so a small graph may legitimately close at 7/7.
+The graph is accepted only when a fresh grader passes **every applicable criterion** — `passed == applicable` — or when an explicit human decision substitutes for an independent gate where that is allowed. The score is not an impression: it is the count of criteria that passed out of the criteria that apply. Each criterion is binary and must be answered with an evidence pointer — a `file:line`, a command and its output, or an artifact id. A criterion that the task does not exercise is marked `not_applicable` with a one-line reason and is excluded from the denominator, so a small graph may legitimately be accepted at 7/7.
 
 | # | Criterion | Passes only when |
 |---|---|---|
@@ -263,23 +263,19 @@ A task with three acceptance criteria is graded out of thirteen, and a full scor
 
 ## Grading Modes
 
-The rubric runs in one of two modes. **`hybrid` is the default**; use it unless the user names another mode.
+The rubric runs one way: a fresh grader scores it, every failure routes to its owner, and the next round re-grades everything. The loop is not optional and has no variant that grades without repairing. The independence that makes a score trustworthy comes from context isolation and ownership routing, not from banning repair — the grader never repairs anything in any case. Defects go to the repair router, the router sends each one to the worker that owns the artifact, and the next round is scored by a fresh grader again.
 
-| Mode | Grader | Repair | Writes | Ends when |
-|---|---|---|---|---|
-| `hybrid` (default) | Scores the rubric and returns a defect list | Routes every failure to its owner and re-grades | Yes | Full score, or `max_grader_rounds` is reached |
-| `score-only` | Scores the rubric and returns a defect list | None | No | The user says so, or there is nothing new to grade |
+A read-only score is still available, as a request rather than a named mode. When the user asks to grade, score, audit, or review **without changing anything**:
 
-Enter `score-only` when the user asks for it by name, or asks to grade, score, audit, or review without changing anything. In this mode:
+- run exactly one round and stop;
+- report the score, every failing criterion, its severity, and its evidence, then hand the decision to the user;
+- state the round number and what changed since the previous score, so the snapshot can be re-taken as the work moves;
+- say plainly that the loop was not run, so the score is a measurement rather than an acceptance;
+- **name every criterion that cannot reach `pass` without a repair.** An outcome criterion that describes a defect is unreachable while writes are withheld, and a score capped by the request itself must not be reported as if the work fell short.
 
-- do not edit, repair, commit, or run anything that writes — the mode is read-only, and its value comes from being an untouched measurement;
-- report the score, every failing criterion, its severity, and its evidence, then stop and hand the decision to the user;
-- keep grading rounds cheap and repeatable so the score can be re-taken as the work moves, and state the round number and what changed since the previous score;
-- never repair a defect just because it is small. A grader that fixes what it measures is no longer an independent measurement, and its next score is worthless.
+Do not repair a defect during a read-only round, however small — a round that fixes what it measures is not the measurement the user asked for. If the user then asks for repairs, run the loop and say that it started.
 
-`score-only` does not close the graph. A passing score from it is a measurement, not an acceptance; the work still needs a `hybrid` gate or an explicit human decision before it counts as complete.
-
-Announce the active mode in the graph plan and in the final report. If the user asks for repairs while in `score-only`, switch to `hybrid` and say that the mode changed.
+Say in the graph plan whether the loop will run, and say the same in the final report.
 
 ## Fresh Grader Loop
 
@@ -290,7 +286,7 @@ The grader is a node in the graph, not a formality at the end.
 3. **Route failures narrowly.** Each defect goes to the responsible worker through the existing repair router, not back through the whole graph.
 4. **Re-grade the whole rubric.** The next round re-checks every criterion, not only the repaired ones, so a fix cannot silently break a criterion that already passed.
 5. **Never edit the rubric mid-loop.** The criteria are fixed before the first round. If a criterion turns out to be wrong, stop the loop, say so, and get the user's decision — do not soften the criterion to make the score rise.
-6. **Stop at the cap.** (`hybrid` only.) The loop ends at a full applicable score or at `max_grader_rounds`. Hitting the cap with criteria still failing is a capped result, not a completed one; report the score, the open defects, and what remains.
+6. **Stop at the cap.** The loop ends at a full applicable score or at `max_grader_rounds`. Hitting the cap with criteria still failing is a capped result, not a completed one; report the score, the open defects, and what remains.
 
 ```text
 build -> fresh grader -> full score? -> yes -> human gate

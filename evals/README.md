@@ -18,7 +18,7 @@ notes: >
 ```
 
 `must_not` matters more than `must` here. Most of what this skill sells is restraint — not
-fanning out, not inventing evidence, not closing a gate it did not earn — and restraint is
+fanning out, not inventing evidence, not opening a gate it did not earn — and restraint is
 exactly what prose alone cannot demonstrate.
 
 ## Coverage
@@ -31,7 +31,7 @@ exactly what prose alone cannot demonstrate.
 | `research` | 08, 09 | No web research the repo can answer; no silent merge of conflicts |
 | `verification` | 10, 11 | Self-reports are not anchors; unanchored audits are labeled |
 | `repair` | 12 | Findings route narrowly, not to the whole graph |
-| `acceptance` | 13–17 | Outcome is graded, score-only stays read-only, capped is not complete |
+| `acceptance` | 13–17, 22 | Outcome is graded, a read-only score stays read-only, capped is not complete, an unreachable criterion is named up front |
 | `limits` | 18 | Budget names a unit the host can observe, or admits it cannot |
 | `routing` | 19, 20 | Workers use assigned skills; missing companions never block |
 | `gates` | 21 | Nothing irreversible without approval for that exact action |

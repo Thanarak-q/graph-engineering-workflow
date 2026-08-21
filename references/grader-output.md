@@ -4,10 +4,9 @@ A grader round returns exactly this shape. Every criterion carries a verdict and
 pointer; a `fail` also carries a severity and the specific defect.
 
 ```yaml
-mode: hybrid
 round: 2
 score: "11/13"
-gate: closed
+gate: blocked
 criteria:
   - id: C6
     verdict: pass

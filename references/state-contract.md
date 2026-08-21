@@ -61,11 +61,10 @@ approvals:
   deploy: pending|approved|not_requested
 
 acceptance:
-  mode: hybrid|score-only
   grader: independent|self_graded
   round: 0
   score: "<passed>/<applicable>"
-  gate: open|closed|capped
+  gate: passed|blocked|capped
   criteria:
     - id: ""
       verdict: pass|fail|not_applicable

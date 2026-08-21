@@ -17,7 +17,7 @@ Worker ownership/isolation: ...
 Verifier and anchors: ...
 Audit nodes selected: ...
 Repair routes: ...
-Acceptance rubric: grading mode, criteria that apply, and who grades them
+Acceptance rubric: criteria that apply, who grades them, and whether the repair loop will run
 Limits: explicit numeric worker/concurrency/wave/retry/grader-round caps, a time limit, and a budget
         as an explicit cap in a unit this host can observe, or `none` with a reason when no
         enforceable budget unit is exposed
@@ -36,7 +36,7 @@ Report one consolidated result, not a transcript from every worker. Include:
 - files or paths changed;
 - anchors actually run and their real results;
 - audit results by dimension;
-- the grading mode, the acceptance rubric score, the grader round it was reached in, and any criterion still failing or marked not applicable;
+- the acceptance rubric score, the grader round it was reached in, whether the repair loop ran, and any criterion still failing or marked not applicable;
 - conflicts and unresolved issues;
 - retries or repair routes used;
 - work not run and why;

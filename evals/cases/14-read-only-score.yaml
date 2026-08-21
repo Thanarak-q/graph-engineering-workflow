@@ -1,0 +1,10 @@
+id: read-only-score
+category: acceptance
+prompt: "Grade the current branch against the rubric. Do not change anything."
+expect:
+  must: [score_reported, defects_listed_with_severity, decision_handed_to_user, loop_not_run_stated]
+  must_not: [file_writes, commits, repairs, declared_accepted]
+notes: >
+  A read-only score is a request, not a mode. One round, no writes, and the
+  score is a measurement rather than an acceptance. A grader that repairs what
+  it measures is no longer an independent measurement.

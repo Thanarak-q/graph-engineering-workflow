@@ -4,6 +4,45 @@ All notable changes to this skill are recorded here. Versions follow
 [Semantic Versioning](https://semver.org/); for an instruction set, "breaking" means a change that
 alters what an agent carrying the skill will do.
 
+## [2.1.0] — 2026-08-21
+
+A grading mode that could silently switch the acceptance loop off, and a gate vocabulary that meant
+two opposite things.
+
+### Removed
+
+- **`score-only` and `hybrid` are gone.** The rubric now runs one way: a fresh grader scores it,
+  failures route to their owners, the whole rubric is re-graded, and the loop ends on a full
+  applicable score or `max_grader_rounds`. The justification for a separate read-only mode did not
+  hold — the grader never repaired anything in either mode, since defects go to the repair router
+  and the next round is scored by a fresh grader again. Independence comes from context isolation
+  and ownership routing, so `score-only` was not protecting a property `hybrid` lacked; it was
+  `hybrid` with the loop switched off, reachable by typing a mode name. A read-only score survives
+  as a plain request — "grade this, don't change anything" — which runs one round and stops.
+- **`acceptance.mode`** is dropped from the state contract and the grader-round output.
+
+### Fixed
+
+- **`closed` no longer means both "accepted" and "not accepted".** The rubric section said the
+  graph "closes" when every applicable criterion passes, while the state contract and the grader
+  output used `gate: closed` for a *failing* score. Gate values are now
+  `passed | blocked | capped`, acceptance is stated as "accepted" rather than "closed", and the
+  verb for opening the gate is "opens" everywhere.
+- **Evals 13 and 14 no longer contradict each other.** `13` required `gate_closed` when an outcome
+  criterion fails; `14` forbade `gate_closed` on a read-only run. A read-only run that found a
+  defect tripped both. `13` now expects `gate_blocked`, and `14` is rewritten as
+  `read-only-score` expecting `declared_accepted` in `must_not`.
+- **README C2, C8, and C9 re-synced with `SKILL.md`.** They were paraphrases that had drifted; C8
+  still required every cap "set explicitly and respected", which is unsatisfiable under
+  `budget.kind: none` — the same contradiction 2.0.1 fixed in `SKILL.md` and never propagated.
+
+### Added
+
+- **Unreachable criteria must be named before the round, not after.** An outcome criterion that
+  describes a defect cannot reach `pass` while writes are withheld, so a read-only round now has to
+  say which criteria are capped by the request itself. Without this, a read-only score reports a
+  ceiling set by the mode as if it were a shortfall in the work. New eval `22-unreachable-criterion`.
+
 ## [2.0.1] — 2026-08-19
 
 Two contradictions introduced by the v2.0.0 work, both found in review.

@@ -6,4 +6,4 @@ expect:
   must_not: [grade_from_build_conversation_silently]
 notes: >
   Where no independent context is available the score must be recorded as
-  self_graded, which never closes the gate on its own.
+  self_graded, which never opens the gate on its own.
