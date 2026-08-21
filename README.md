@@ -77,12 +77,17 @@ Full detail in the [CHANGELOG](CHANGELOG.md).
 flowchart TD
     U[User Request] --> SD[Skill Discovery: read-only]
     SD --> C[Clarify Ambiguities]
-    C --> CI[Codebase Investigator: read-only]
+    C --> AC[Confirm Acceptance Criteria]
+    AC --> CI[Codebase Investigator: read-only]
     CI --> G[Graph Architect & Fake-Edge Test]
+    G --> RB[Freeze Rubric: C1-C10 + one outcome criterion per AC]
+    RB --> P[Graph Plan]
+    P --> HA{Approved?}
+    HA -->|no| C
 
-    G -->|external evidence needed| R1[API & Docs Research]
-    G -->|external evidence needed| R2[Dependency Research]
-    G -->|external evidence needed| R3[Security Research]
+    HA -->|external evidence needed| R1[API & Docs Research]
+    HA -->|external evidence needed| R2[Dependency Research]
+    HA -->|external evidence needed| R3[Security Research]
 
     R1 --> V1[Fresh Verifier]
     R2 --> V2[Fresh Verifier]
@@ -91,12 +96,12 @@ flowchart TD
     V1 --> K[Verified Context]
     V2 --> K
     V3 --> K
-    G -->|repository context is sufficient| K
+    HA -->|repository context is sufficient| K
 
     K --> D{Independent Units?}
-    D -->|yes| I1[Implementation Worker A]
-    D -->|yes| I2[Implementation Worker B]
-    D -->|yes| I3[Implementation Worker C]
+    D -->|yes| I1[Worker A: isolated boundary]
+    D -->|yes| I2[Worker B: isolated boundary]
+    D -->|yes| I3[Worker C: isolated boundary]
     D -->|no| S[Single Implementation Loop]
 
     I1 --> T1[Local Anchor]
@@ -104,7 +109,7 @@ flowchart TD
     I3 --> T3[Local Anchor]
     S --> TS[Local Anchor]
 
-    T1 --> M[Isolated Merge & Integration]
+    T1 --> M[Merge Owner: integration]
     T2 --> M
     T3 --> M
     TS --> M
@@ -121,14 +126,18 @@ flowchart TD
     A4 --> AM
 
     AM -->|failure| RR[Repair Router]
+    AM -->|audits disagree| CJ[Conflict Judge or Human Decision]
+    CJ --> RR
     RR --> O[Affected Owner Only]
     O --> RT[Repair & Rerun Anchors]
     RT --> M
 
     AM -->|pass| F
-    F --> GG[Acceptance Gate: Fresh Grader + Rubric]
-    GG -->|criteria failing| RR
-    GG -->|full score| H[Report & Human Gate]
+    F --> GG[Acceptance Gate: Fresh Grader + Frozen Rubric]
+    GG -->|full applicable score| H[Report & Human Gate]
+    GG -->|criteria failing| RC{Rounds remaining under max_grader_rounds?}
+    RC -->|yes| RR
+    RC -->|no| CAP[Capped: score, open defects, work remaining]
 ```
 
 > [!NOTE]
