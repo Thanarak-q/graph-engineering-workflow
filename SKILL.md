@@ -261,7 +261,7 @@ Criteria C1–C10 grade how the graph was run. They do not grade whether the wor
 
 A task with three acceptance criteria is graded out of thirteen, and a full score means 13/13. Passing all ten process criteria is not a passing graph on its own; it is a well-run graph whose outcome is still ungraded.
 
-## Grading Modes
+## The Grading Loop
 
 The rubric runs one way: a fresh grader scores it, every failure routes to its owner, and the next round re-grades everything. The loop is not optional and has no variant that grades without repairing. The independence that makes a score trustworthy comes from context isolation and ownership routing, not from banning repair — the grader never repairs anything in any case. Defects go to the repair router, the router sends each one to the worker that owns the artifact, and the next round is scored by a fresh grader again.
 
